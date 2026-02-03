@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # @file 30-buildflags
 # @brief get-bashed module: 30-buildflags
 # @description

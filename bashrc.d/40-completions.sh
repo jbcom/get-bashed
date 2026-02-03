@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+#!/usr/bin/env bash
+# shellcheck disable=SC1090,SC1091
 # @file 40-completions
 # @brief get-bashed module: 40-completions
 # @description

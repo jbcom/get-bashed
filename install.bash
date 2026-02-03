@@ -37,7 +37,9 @@ USAGE
 }
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck disable=SC1091
 source "$REPO_DIR/installers/_helpers.sh"
+# shellcheck disable=SC1091
 source "$REPO_DIR/installers/tools.sh"
 PREFIX="${GET_BASHED_HOME:-$HOME/.get-bashed}"
 FORCE=0
@@ -264,6 +266,7 @@ backup_file() {
   mkdir -p "$backup_dir"
   local base
   base="$(basename "$file")"
+  base="${base#.}"
   local ts
   ts="$(date +%s)"
   mv "$file" "$backup_dir/${base}.${ts}"
@@ -327,6 +330,7 @@ fi
 
 # Load installer registry early for interactive UI.
 load_installers
+: "${INSTALLERS:=}"
 
 # Preserve CLI features/installers so profiles do not clobber them.
 CLI_FEATURES="${FEATURES:-}"
@@ -411,6 +415,7 @@ if [[ "$AUTO" -eq 0 ]]; then
       done
 
       dialog_opts=()
+      # shellcheck disable=SC2153
       for id in $INSTALLERS; do
         desc_var="INSTALL_DESC_${id}"
         desc="${!desc_var}"
@@ -464,6 +469,7 @@ if [[ "$LIST" -eq 1 ]]; then
   echo "  dev_tools"
   echo "  ops_tools"
   echo "Installers:"
+  # shellcheck disable=SC2153
   for id in $INSTALLERS; do
     echo "  $id"
   done
@@ -510,6 +516,7 @@ fi
 
 mkdir -p "$PREFIX"
 export GET_BASHED_HOME="$PREFIX"
+export GET_BASHED_VIMRC_MODE="$VIMRC_MODE"
 
 copy_tree() {
   local src="$1" dest="$2"
@@ -549,6 +556,7 @@ fi
   echo "export GET_BASHED_USE_DOPPLER=${GET_BASHED_USE_DOPPLER}"
   echo "export GET_BASHED_USE_BASH_IT=${GET_BASHED_USE_BASH_IT}"
   echo "export GET_BASHED_GIT_SIGNING=${GET_BASHED_GIT_SIGNING}"
+  echo "export GET_BASHED_VIMRC_MODE=\"${GET_BASHED_VIMRC_MODE}\""
   if [[ -n "$USER_NAME" ]]; then
     echo "export GET_BASHED_USER_NAME=\"${USER_NAME}\""
   fi
@@ -573,10 +581,13 @@ if [[ "$LINK_DOTFILES" -eq 1 ]]; then
   fi
 else
   # Update login shell snippets (idempotent)
-  BASHRC_LINE="# get-bashed: source modular bashrc"
-  BASHRC_SNIP='if [[ -r "$HOME/.get-bashed/bashrc" ]]; then source "$HOME/.get-bashed/bashrc"; fi'
-  BASH_PROFILE_LINE="# get-bashed: source login bash_profile"
-  BASH_PROFILE_SNIP='if [[ -r "$HOME/.get-bashed/bash_profile" ]]; then source "$HOME/.get-bashed/bash_profile"; fi'
+ # shellcheck disable=SC2016
+BASHRC_LINE="# get-bashed: source modular bashrc"
+ # shellcheck disable=SC2016
+BASHRC_SNIP='if [[ -r "$HOME/.get-bashed/bashrc" ]]; then source "$HOME/.get-bashed/bashrc"; fi'
+BASH_PROFILE_LINE="# get-bashed: source login bash_profile"
+ # shellcheck disable=SC2016
+BASH_PROFILE_SNIP='if [[ -r "$HOME/.get-bashed/bash_profile" ]]; then source "$HOME/.get-bashed/bash_profile"; fi'
 
   ensure_block "$HOME/.bashrc" "$BASHRC_LINE" "$BASHRC_SNIP"
   ensure_block "$HOME/.bash_profile" "$BASH_PROFILE_LINE" "$BASH_PROFILE_SNIP"
@@ -594,7 +605,20 @@ declare -A INSTALL_DONE=()
 
 get_deps() {
   local id="$1"
-  echo "${TOOL_DEPS[$id]:-}"
+  _ensure_tools_loaded
+  local deps="${TOOL_DEPS[$id]:-}"
+  local opt="${TOOL_OPT_DEPS[$id]:-}"
+  if [[ -n "$opt" ]]; then
+    IFS=',' read -r -a _opt_specs <<<"$opt"
+    for spec in "${_opt_specs[@]}"; do
+      local flag="${spec%%:*}"
+      local dep="${spec#*:}"
+      if [[ -n "${!flag:-}" && "${!flag}" != "0" ]]; then
+        deps="${deps},${dep}"
+      fi
+    done
+  fi
+  echo "${deps#,}"
 }
 
 is_done() {

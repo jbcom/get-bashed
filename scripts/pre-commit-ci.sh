@@ -10,6 +10,10 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 . "$ROOT_DIR/scripts/ci-setup.sh" "pre_commit,actionlint,shellcheck,bashate,shdoc"
 
+if command -v shdoc >/dev/null 2>&1; then
+  "$ROOT_DIR/scripts/gen-docs.sh"
+fi
+
 if command -v pre-commit >/dev/null 2>&1; then
   pre-commit run --all-files
 else

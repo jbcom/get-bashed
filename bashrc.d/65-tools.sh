@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # @file 65-tools
 # @brief get-bashed module: 65-tools
 # @description
