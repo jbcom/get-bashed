@@ -8,10 +8,10 @@ Runtime module loaded by get-bashed in lexicographic order.
 
 ## Index
 
-* [_path_add_front](#pathaddfront)
-* [install_cli_tools](#installclitools)
-* [doppler_shell](#dopplershell)
-* [get_bashed_component](#getbashedcomponent)
+* [_path_add_front](#_path_add_front)
+* [install_cli_tools](#install_cli_tools)
+* [doppler_shell](#doppler_shell)
+* [get_bashed_component](#get_bashed_component)
 * [ex](#ex)
 
 ### _path_add_front

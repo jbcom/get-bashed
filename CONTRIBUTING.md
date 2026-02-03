@@ -32,6 +32,7 @@ pre-commit run --all-files
 ## Tests
 
 ```bash
+./scripts/test-setup.sh
 bats tests
 ```
 

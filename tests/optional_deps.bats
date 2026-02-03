@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+load test_helper
+
 @test "optional deps are added when feature enabled" {
   TMPDIR="$(mktemp -d)"
   HOME="$TMPDIR/home"
@@ -8,5 +10,5 @@
   HOME="$HOME" bash ./install.sh --auto --prefix "$HOME/.get-bashed" --force --features git_signing --install git --dry-run > "$TMPDIR/out"
 
   run grep -F "would install: gnupg" "$TMPDIR/out"
-  [ "$status" -eq 0 ]
+  assert_success
 }

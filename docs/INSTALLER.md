@@ -10,9 +10,9 @@ feature flags, and installer bundles.
 ## Index
 
 * [usage](#usage)
-* [apply_profile](#applyprofile)
-* [apply_feature](#applyfeature)
-* [split_csv](#splitcsv)
+* [apply_profile](#apply_profile)
+* [apply_feature](#apply_feature)
+* [split_csv](#split_csv)
 
 ### usage
 

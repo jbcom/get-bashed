@@ -17,6 +17,36 @@ shdoc < "$ROOT_DIR/install.sh" > "$ROOT_DIR/docs/INSTALLER.md"
 shdoc < "$ROOT_DIR/installers/_helpers.sh" > "$ROOT_DIR/docs/INSTALLERS_HELPERS.md"
 shdoc < "$ROOT_DIR/installers/tools.sh" > "$ROOT_DIR/docs/INSTALLERS.md"
 
+fix_toc_anchors() {
+  local file="$1" tmp
+  tmp="$(mktemp)"
+  awk '
+    function anchorize(text,   t) {
+      t = tolower(text)
+      gsub(/ /, "-", t)
+      gsub(/[^a-z0-9_-]/, "", t)
+      return t
+    }
+    {
+      if (match($0, /^\* \[[^]]+\]\(#/)) {
+        line = $0
+        sub(/^\* \[/, "", line)
+        text = line
+        sub(/\].*$/, "", text)
+        anchor = anchorize(text)
+        print "* [" text "](#" anchor ")"
+      } else {
+        print $0
+      }
+    }
+  ' "$file" > "$tmp"
+  mv "$tmp" "$file"
+}
+
+for doc in "$ROOT_DIR/docs/INSTALLER.md" "$ROOT_DIR/docs/INSTALLERS_HELPERS.md" "$ROOT_DIR/docs/INSTALLERS.md"; do
+  fix_toc_anchors "$doc"
+done
+
 # Combine all runtime modules
 TMP_MODULES="$(mktemp)"
 shopt -s nullglob
@@ -32,6 +62,7 @@ done
 shopt -u nullglob
 shdoc < "$TMP_MODULES" > "$ROOT_DIR/docs/MODULES.md"
 rm -f "$TMP_MODULES"
+fix_toc_anchors "$ROOT_DIR/docs/MODULES.md"
 
 # Generate index
 {

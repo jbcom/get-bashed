@@ -2,7 +2,6 @@
 
 Generated docs:
 - [CONFIG.md](CONFIG.md)
-- [INDEX.md](INDEX.md)
 - [INSTALLER.md](INSTALLER.md)
 - [INSTALLERS.md](INSTALLERS.md)
 - [INSTALLERS_HELPERS.md](INSTALLERS_HELPERS.md)

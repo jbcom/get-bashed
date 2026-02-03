@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+load test_helper
+
 @test "link-dotfiles creates symlinks and updates gitconfig" {
   TMPDIR="$(mktemp -d)"
   HOME="$TMPDIR/home"
@@ -10,17 +12,23 @@
 
   HOME="$HOME" bash ./install.sh --auto --link-dotfiles --name "$USER_NAME" --email "$USER_EMAIL" --prefix "$HOME/.get-bashed" --force
 
-  [ -L "$HOME/.bashrc" ]
-  [ -L "$HOME/.bash_profile" ]
-  [ -L "$HOME/.inputrc" ]
-  [ -L "$HOME/.bash_aliases" ]
-  [ -L "$HOME/.vimrc" ]
-  [ -L "$HOME/.gitconfig" ]
+  run test -L "$HOME/.bashrc"
+  assert_success
+  run test -L "$HOME/.bash_profile"
+  assert_success
+  run test -L "$HOME/.inputrc"
+  assert_success
+  run test -L "$HOME/.bash_aliases"
+  assert_success
+  run test -L "$HOME/.vimrc"
+  assert_success
+  run test -L "$HOME/.gitconfig"
+  assert_success
 
   run grep -F "name = ${USER_NAME}" "$HOME/.get-bashed/gitconfig"
-  [ "$status" -eq 0 ]
+  assert_success
   run grep -F "email = ${USER_EMAIL}" "$HOME/.get-bashed/gitconfig"
-  [ "$status" -eq 0 ]
+  assert_success
 }
 
 @test "link-dotfiles backs up existing dotfiles" {
@@ -31,8 +39,9 @@
 
   HOME="$HOME" bash ./install.sh --auto --link-dotfiles --prefix "$HOME/.get-bashed" --force
 
-  [ -L "$HOME/.bashrc" ]
-  [ -d "$HOME/.get-bashed/backup" ]
+  run test -L "$HOME/.bashrc"
+  assert_success
+  assert_dir_exist "$HOME/.get-bashed/backup"
   run ls "$HOME/.get-bashed/backup" | grep -E '^bashrc\.[0-9]+'
-  [ "$status" -eq 0 ]
+  assert_success
 }

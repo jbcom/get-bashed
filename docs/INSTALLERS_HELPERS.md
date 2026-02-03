@@ -9,19 +9,19 @@ installer scripts.
 
 ## Index
 
-* [install_tool](#installtool)
-* [install_asdf](#installasdf)
-* [install_gnu_tools](#installgnutools)
-* [install_java](#installjava)
-* [install_nodejs](#installnodejs)
-* [install_python](#installpython)
-* [install_shdoc](#installshdoc)
-* [install_vimrc](#installvimrc)
-* [install_actionlint](#installactionlint)
-* [pkg_install](#pkginstall)
-* [asdf_has_plugin](#asdfhasplugin)
-* [asdf_install_plugin](#asdfinstallplugin)
-* [pipx_install](#pipxinstall)
+* [install_tool](#install_tool)
+* [install_asdf](#install_asdf)
+* [install_gnu_tools](#install_gnu_tools)
+* [install_java](#install_java)
+* [install_nodejs](#install_nodejs)
+* [install_python](#install_python)
+* [install_shdoc](#install_shdoc)
+* [install_vimrc](#install_vimrc)
+* [install_actionlint](#install_actionlint)
+* [pkg_install](#pkg_install)
+* [asdf_has_plugin](#asdf_has_plugin)
+* [asdf_install_plugin](#asdf_install_plugin)
+* [pipx_install](#pipx_install)
 
 ### install_tool
 

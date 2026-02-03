@@ -366,6 +366,12 @@ fi
 # Load installer registry early for interactive UI.
 load_installers
 
+# Preserve CLI features/installers so profiles do not clobber them.
+CLI_FEATURES="${FEATURES:-}"
+CLI_INSTALLS="${INSTALLS:-}"
+FEATURES=""
+INSTALLS=""
+
 # Apply profiles first
 if [[ -n "$PROFILES" ]]; then
   for p in $(split_csv "$PROFILES"); do
@@ -378,19 +384,25 @@ if [[ -n "$PROFILES" ]]; then
     if [[ -r "$PROFILE_FILE" ]]; then
       # shellcheck disable=SC1090
       source "$PROFILE_FILE"
-      if [[ -n "${FEATURES:-}" ]]; then
-        for f in $(split_csv "$FEATURES"); do
+      PROFILE_FEATURES="${FEATURES:-}"
+      if [[ -n "$PROFILE_FEATURES" ]]; then
+        for f in $(split_csv "$PROFILE_FEATURES"); do
           apply_feature "$f" || { echo "Unknown feature: $f"; exit 1; }
         done
       fi
       if [[ -n "${INSTALLS:-}" ]]; then
         GROUP_INSTALLS="${GROUP_INSTALLS},${INSTALLS}"
       fi
+      FEATURES=""
+      INSTALLS=""
     else
       apply_profile "$p" || { echo "Unknown profile: $p"; exit 1; }
     fi
   done
 fi
+
+FEATURES="$CLI_FEATURES"
+INSTALLS="$CLI_INSTALLS"
 
 # Apply features overrides
 if [[ -n "$FEATURES" ]]; then
