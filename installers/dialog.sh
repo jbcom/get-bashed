@@ -19,10 +19,10 @@ install_dialog() {
   if _using_brew; then
     brew install dialog
   elif command -v apt-get >/dev/null 2>&1; then
-    sudo apt-get update && sudo apt-get install -y dialog
+    apt_install dialog
   elif command -v dnf >/dev/null 2>&1; then
-    sudo dnf install -y dialog
+    dnf_install dialog
   elif command -v yum >/dev/null 2>&1; then
-    sudo yum install -y dialog
+    yum_install dialog
   fi
 }

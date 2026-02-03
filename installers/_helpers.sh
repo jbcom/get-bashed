@@ -31,6 +31,67 @@ _using_pipx() { command -v pipx >/dev/null 2>&1; }
 # @internal
 _using_pip() { command -v python3 >/dev/null 2>&1 && python3 -m pip --version >/dev/null 2>&1; }
 
+# @internal
+_auto_approved() { [[ "${GET_BASHED_AUTO_APPROVE:-0}" == "1" ]]; }
+
+# @description Run a command with auto-approval when configured.
+# @arg $1 string Command name.
+# @arg $2 string Optional flag to auto-approve (e.g., -y, --noconfirm).
+# @arg $3 string Optional extra flag (e.g., --assume-yes).
+# @arg $4 string Optional extra flag (e.g., --yes).
+# @arg $5 string Optional extra flag (e.g., --confirm).
+# @arg $6 string Optional extra flag (e.g., --no-confirm).
+auto_exec() {
+  local cmd="$1"; shift
+  local -a flags=()
+  if _auto_approved; then
+    while [[ $# -gt 0 ]]; do
+      [[ -n "$1" ]] && flags+=("$1")
+      shift
+    done
+  else
+    while [[ $# -gt 0 ]]; do shift; done
+  fi
+  "$cmd" "${flags[@]}"
+}
+
+# @internal
+apt_install() {
+  sudo apt-get update
+  if _auto_approved; then
+    sudo apt-get install -y "$@"
+  else
+    sudo apt-get install "$@"
+  fi
+}
+
+# @internal
+dnf_install() {
+  if _auto_approved; then
+    sudo dnf install -y "$@"
+  else
+    sudo dnf install "$@"
+  fi
+}
+
+# @internal
+yum_install() {
+  if _auto_approved; then
+    sudo yum install -y "$@"
+  else
+    sudo yum install "$@"
+  fi
+}
+
+# @internal
+pacman_install() {
+  if _auto_approved; then
+    sudo pacman -Sy --noconfirm "$@"
+  else
+    sudo pacman -Sy "$@"
+  fi
+}
+
 # Known install sources (git/curl)
 declare -A GET_BASHED_GIT_SOURCES=(
   ["bash_it"]="https://github.com/Bash-it/bash-it.git"
@@ -102,19 +163,19 @@ component_install() {
   fi
 
   if command -v apt-get >/dev/null 2>&1; then
-    if sudo apt-get update && sudo apt-get install -y "$term"; then
+    if apt_install "$term"; then
       return 0
     fi
   elif command -v dnf >/dev/null 2>&1; then
-    if sudo dnf install -y "$term"; then
+    if dnf_install "$term"; then
       return 0
     fi
   elif command -v yum >/dev/null 2>&1; then
-    if sudo yum install -y "$term"; then
+    if yum_install "$term"; then
       return 0
     fi
   elif command -v pacman >/dev/null 2>&1; then
-    if sudo pacman -Sy --noconfirm "$term"; then
+    if pacman_install "$term"; then
       return 0
     fi
   fi
@@ -155,13 +216,13 @@ pkg_install() {
   if _using_brew; then
     brew install "$brew_pkg"
   elif command -v apt-get >/dev/null 2>&1; then
-    sudo apt-get update && sudo apt-get install -y "$apt_pkg"
+    apt_install "$apt_pkg"
   elif command -v dnf >/dev/null 2>&1; then
-    sudo dnf install -y "$dnf_pkg"
+    dnf_install "$dnf_pkg"
   elif command -v yum >/dev/null 2>&1; then
-    sudo yum install -y "$yum_pkg"
+    yum_install "$yum_pkg"
   elif command -v pacman >/dev/null 2>&1; then
-    sudo pacman -Sy --noconfirm "$brew_pkg"
+    pacman_install "$brew_pkg"
   else
     echo "No supported package manager found for $brew_pkg" >&2
     return 1

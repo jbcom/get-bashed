@@ -20,9 +20,17 @@ install_shdoc() {
   fi
 
   if command -v yay >/dev/null 2>&1; then
-    yay -S --noconfirm shdoc-git && return 0
+    if _auto_approved; then
+      yay -S --noconfirm shdoc-git && return 0
+    else
+      yay -S shdoc-git && return 0
+    fi
   elif command -v paru >/dev/null 2>&1; then
-    paru -S --noconfirm shdoc-git && return 0
+    if _auto_approved; then
+      paru -S --noconfirm shdoc-git && return 0
+    else
+      paru -S shdoc-git && return 0
+    fi
   fi
 
   echo "shdoc is not available via the detected package manager." >&2

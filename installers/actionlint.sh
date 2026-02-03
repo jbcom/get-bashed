@@ -20,7 +20,7 @@ install_actionlint() {
     brew install actionlint && return 0
   fi
   if command -v apt-get >/dev/null 2>&1; then
-    if sudo apt-get update && sudo apt-get install -y actionlint; then
+    if apt_install actionlint; then
       return 0
     fi
   fi

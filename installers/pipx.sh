@@ -22,19 +22,19 @@ install_pipx() {
   fi
 
   if command -v apt-get >/dev/null 2>&1; then
-    sudo apt-get update && sudo apt-get install -y pipx
+    apt_install pipx
     return 0
   fi
   if command -v dnf >/dev/null 2>&1; then
-    sudo dnf install -y pipx
+    dnf_install pipx
     return 0
   fi
   if command -v yum >/dev/null 2>&1; then
-    sudo yum install -y pipx
+    yum_install pipx
     return 0
   fi
   if command -v pacman >/dev/null 2>&1; then
-    sudo pacman -Sy --noconfirm python-pipx
+    pacman_install python-pipx
     return 0
   fi
 

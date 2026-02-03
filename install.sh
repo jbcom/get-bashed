@@ -40,6 +40,7 @@ USAGE
 }
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$REPO_DIR/installers/_helpers.sh"
 PREFIX="${GET_BASHED_HOME:-$HOME/.get-bashed}"
 FORCE=0
 WITH_UI=0
@@ -125,6 +126,10 @@ while [[ $# -gt 0 ]]; do
       echo "Unknown argument: $1"; usage; exit 1 ;;
   esac
 done
+
+if [[ "$YES" -eq 1 || "$AUTO" -eq 1 ]]; then
+  export GET_BASHED_AUTO_APPROVE=1
+fi
 
 # @description Apply a built-in profile.
 # @arg $1 string Profile name.
@@ -285,11 +290,11 @@ install_dialog() {
   if command -v brew >/dev/null 2>&1; then
     brew install dialog
   elif command -v apt-get >/dev/null 2>&1; then
-    sudo apt-get update && sudo apt-get install -y dialog
+    apt_install dialog
   elif command -v dnf >/dev/null 2>&1; then
-    sudo dnf install -y dialog
+    dnf_install dialog
   elif command -v yum >/dev/null 2>&1; then
-    sudo yum install -y dialog
+    yum_install dialog
   fi
 }
 
