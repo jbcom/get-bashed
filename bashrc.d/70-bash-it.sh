@@ -24,12 +24,12 @@ if [[ "${GET_BASHED_USE_BASH_IT:-0}" == "1" ]]; then
     if [[ -n "${GET_BASHED_BASH_IT_SEARCH:-}" ]]; then
       if [[ -z "${GET_BASHED_BASH_IT_APPLIED:-}" ]]; then
         GET_BASHED_BASH_IT_APPLIED=1
-        local action="${GET_BASHED_BASH_IT_ACTION:-enable}"
+        action="${GET_BASHED_BASH_IT_ACTION:-enable}"
         case "$action" in
           enable|disable) ;;
           *) action="enable" ;;
         esac
-        local refresh=""
+        refresh=""
         if [[ "${GET_BASHED_BASH_IT_REFRESH:-0}" == "1" ]]; then
           refresh="--refresh"
         fi

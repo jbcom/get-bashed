@@ -19,6 +19,7 @@ shdoc < "$ROOT_DIR/installers/tools.sh" > "$ROOT_DIR/docs/INSTALLERS.md"
 
 # Combine all runtime modules
 TMP_MODULES="$(mktemp)"
+shopt -s nullglob
 for f in "$ROOT_DIR/bashrc.d"/*.sh; do
   {
     echo ""
@@ -28,6 +29,7 @@ for f in "$ROOT_DIR/bashrc.d"/*.sh; do
     echo ""
   } >> "$TMP_MODULES"
 done
+shopt -u nullglob
 shdoc < "$TMP_MODULES" > "$ROOT_DIR/docs/MODULES.md"
 rm -f "$TMP_MODULES"
 
@@ -38,7 +40,7 @@ rm -f "$TMP_MODULES"
   echo "Generated docs:"
   for f in "$ROOT_DIR/docs"/*.md; do
     base="$(basename "$f")"
-    [[ "$base" == "index.md" ]] && continue
+    [[ "$base" == "INDEX.md" ]] && continue
     echo "- [$base]($base)"
   done
 } > "$ROOT_DIR/docs/INDEX.md"

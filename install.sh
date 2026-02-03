@@ -241,6 +241,7 @@ installer_exists() {
 
 # Installer registry
 INSTALLERS=""
+declare -A INSTALL_IN_PROGRESS
 # @internal
 load_installers() {
   local id
@@ -303,9 +304,14 @@ run_install() {
     echo "Invalid installer id: $id" >&2
     return 1
   fi
+  if [[ "${INSTALL_IN_PROGRESS[$id]:-0}" == "1" ]]; then
+    echo "Circular dependency detected at: $id" >&2
+    return 1
+  fi
   if is_done "$id"; then
     return 0
   fi
+  INSTALL_IN_PROGRESS["$id"]=1
   for dep in $(get_deps "$id"); do
     run_install "$dep"
   done
@@ -318,6 +324,7 @@ run_install() {
       install_tool "$id"
     fi
   fi
+  unset INSTALL_IN_PROGRESS["$id"]
   mark_done "$id"
 }
 
@@ -665,32 +672,28 @@ link_dotfile() {
 apply_gitconfig() {
   local cfg="$PREFIX/gitconfig"
   [[ -f "$cfg" ]] || return 0
-  local name_esc email_esc
-  name_esc="${USER_NAME//\\/\\\\}"
-  name_esc="${name_esc//|/\\|}"
-  email_esc="${USER_EMAIL//\\/\\\\}"
-  email_esc="${email_esc//|/\\|}"
   if [[ -n "$USER_NAME" ]]; then
-    if grep -q "^[[:space:]]*name[[:space:]]*=" "$cfg"; then
-      sed -i.bak -E "s|^[[:space:]]*name[[:space:]]*=.*|    name = ${name_esc}|" "$cfg"
-    fi
+    git config -f "$cfg" user.name "$USER_NAME"
   fi
   if [[ -n "$USER_EMAIL" ]]; then
-    if grep -q "^[[:space:]]*email[[:space:]]*=" "$cfg"; then
-      sed -i.bak -E "s|^[[:space:]]*email[[:space:]]*=.*|    email = ${email_esc}|" "$cfg"
-    fi
+    git config -f "$cfg" user.email "$USER_EMAIL"
   fi
-  rm -f "$cfg.bak"
 }
 
 if [[ "$LINK_DOTFILES" -eq 1 ]]; then
-  apply_gitconfig
+  if [[ -z "$USER_NAME" || -z "$USER_EMAIL" ]]; then
+    echo "Skipping gitconfig link: missing --name/--email." >&2
+  else
+    apply_gitconfig
+  fi
   link_dotfile "bashrc"
   link_dotfile "bash_profile"
   link_dotfile "inputrc"
   link_dotfile "bash_aliases"
   link_dotfile "vimrc"
-  link_dotfile "gitconfig"
+  if [[ -n "$USER_NAME" && -n "$USER_EMAIL" ]]; then
+    link_dotfile "gitconfig"
+  fi
 fi
 
 echo "Installed get-bashed to $PREFIX"
