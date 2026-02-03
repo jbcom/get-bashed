@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # @file 20-path
 # @brief get-bashed module: 20-path
 # @description

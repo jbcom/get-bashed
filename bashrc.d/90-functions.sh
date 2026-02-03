@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # @file 90-functions
 # @brief get-bashed module: 90-functions
 # @description

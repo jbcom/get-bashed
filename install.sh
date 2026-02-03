@@ -17,6 +17,7 @@ fi
 #     Supports non-interactive and interactive installation with profiles,
 #     feature flags, and installer bundles.
 
+# shellcheck disable=SC3040
 set -euo pipefail
 
 # @description Print usage help.

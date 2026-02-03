@@ -20,12 +20,14 @@ shdoc < "$ROOT_DIR/installers/tools.sh" > "$ROOT_DIR/docs/INSTALLERS.md"
 # Combine all runtime modules
 TMP_MODULES="$(mktemp)"
 for f in "$ROOT_DIR/bashrc.d"/*.sh; do
-  echo "" >> "$TMP_MODULES"
-  cat "$f" >> "$TMP_MODULES"
-  echo "" >> "$TMP_MODULES"
-  echo "# ----" >> "$TMP_MODULES"
-  echo "" >> "$TMP_MODULES"
- done
+  {
+    echo ""
+    cat "$f"
+    echo ""
+    echo "# ----"
+    echo ""
+  } >> "$TMP_MODULES"
+done
 shdoc < "$TMP_MODULES" > "$ROOT_DIR/docs/MODULES.md"
 rm -f "$TMP_MODULES"
 

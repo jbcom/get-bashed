@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# bashate: ignore=E003,E006
 # @file installers-helpers
 # @brief Shared helpers for installers.
 # @description

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2034
 # @file tools
 # @brief Tool registry for get-bashed installers.
 # @description

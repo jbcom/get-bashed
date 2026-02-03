@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # @file 95-ssh-agent
 # @brief get-bashed module: 95-ssh-agent
 # @description

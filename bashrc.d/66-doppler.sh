@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # @file 66-doppler
 # @brief get-bashed module: 66-doppler
 # @description

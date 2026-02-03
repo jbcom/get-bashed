@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # @file 40-completions
 # @brief get-bashed module: 40-completions
 # @description

@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # @file 70-bash-it
 # @brief get-bashed module: 70-bash-it
 # @description
