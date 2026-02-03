@@ -6,7 +6,8 @@ Thanks for helping improve get-bashed. This repo is intentionally shell-first, p
 
 - `bashrc` and `bash_profile` are the entrypoints.
 - `bashrc.d/` contains ordered runtime modules.
-- `install.sh` is the installer and config generator.
+- `install.sh` is the POSIX bootstrap that hands off to `install.bash`.
+- `install.bash` is the full installer and config generator.
 - `installers/` holds dependency-aware installers and helpers.
 - `scripts/` includes CI and doc helpers.
 - `tests/` contains Bats tests and helper libraries.

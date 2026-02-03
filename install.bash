@@ -199,7 +199,12 @@ apply_feature() {
     auto_tools) GET_BASHED_AUTO_TOOLS=$v ;;
     ssh_agent) GET_BASHED_SSH_AGENT=$v ;;
     doppler_env) GET_BASHED_USE_DOPPLER=$v ;;
-    bash_it) GET_BASHED_USE_BASH_IT=$v ;;
+    bash_it)
+      GET_BASHED_USE_BASH_IT=$v
+      if [[ "$v" -eq 1 ]]; then
+        GROUP_INSTALLS="${GROUP_INSTALLS},bash_it"
+      fi
+      ;;
     git_signing) GET_BASHED_GIT_SIGNING=$v ;;
     dev_tools) GROUP_INSTALLS="${GROUP_INSTALLS},rg,fd,bat,fzf,jq,yq,tree,direnv,starship,nodejs,python,bash" ;;
     ops_tools) GROUP_INSTALLS="${GROUP_INSTALLS},gh,git_lfs,terraform,awscli,kubectl,helm,stern,doppler,nodejs,python,java,bash" ;;
@@ -273,9 +278,13 @@ link_dotfile() {
     return 0
   fi
   if [[ -L "$dest" ]]; then
-    return 0
-  fi
-  if [[ -e "$dest" ]]; then
+    local current
+    current="$(readlink "$dest" || true)"
+    if [[ "$current" == "$src" ]]; then
+      return 0
+    fi
+    backup_file "$dest"
+  elif [[ -e "$dest" ]]; then
     backup_file "$dest"
   fi
   ln -s "$src" "$dest"
@@ -558,20 +567,22 @@ if [[ "$LINK_DOTFILES" -eq 1 ]]; then
   else
     echo "Skipping gitconfig link (missing --name/--email)." >&2
   fi
+else
+  # Update login shell snippets (idempotent)
+  BASHRC_LINE="# get-bashed: source modular bashrc"
+  BASHRC_SNIP='if [[ -r "$HOME/.get-bashed/bashrc" ]]; then source "$HOME/.get-bashed/bashrc"; fi'
+  BASH_PROFILE_LINE="# get-bashed: source login bash_profile"
+  BASH_PROFILE_SNIP='if [[ -r "$HOME/.get-bashed/bash_profile" ]]; then source "$HOME/.get-bashed/bash_profile"; fi'
+
+  ensure_block "$HOME/.bashrc" "$BASHRC_LINE" "$BASHRC_SNIP"
+  ensure_block "$HOME/.bash_profile" "$BASH_PROFILE_LINE" "$BASH_PROFILE_SNIP"
 fi
-
-# Update login shell snippets (idempotent)
-BASHRC_LINE="# get-bashed: source modular bashrc"
-BASHRC_SNIP='if [[ -r "$HOME/.get-bashed/bashrc" ]]; then source "$HOME/.get-bashed/bashrc"; fi'
-BASH_PROFILE_LINE="# get-bashed: source login bash_profile"
-BASH_PROFILE_SNIP='if [[ -r "$HOME/.get-bashed/bash_profile" ]]; then source "$HOME/.get-bashed/bash_profile"; fi'
-
-ensure_block "$HOME/.bashrc" "$BASHRC_LINE" "$BASHRC_SNIP"
-ensure_block "$HOME/.bash_profile" "$BASH_PROFILE_LINE" "$BASH_PROFILE_SNIP"
 
 # Installers
 if [[ -n "$INSTALLS" ]]; then
   INSTALLS="${INSTALLS},${GROUP_INSTALLS#,}"
+else
+  INSTALLS="${GROUP_INSTALLS#,}"
 fi
 
 declare -A INSTALL_IN_PROGRESS=()

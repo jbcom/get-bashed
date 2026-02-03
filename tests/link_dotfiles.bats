@@ -47,3 +47,19 @@ load test_helper
   run bash -c 'ls "$1" | grep -E "^bashrc\\.[0-9]+"' _ "$TEST_HOME/.get-bashed/backup"
   assert_success
 }
+
+@test "link-dotfiles replaces existing symlink" {
+  TMPDIR="$(mktemp -d)"
+  HOME="$TMPDIR/home"
+  mkdir -p "$HOME"
+  TEST_HOME="$HOME"
+  mkdir -p "$TEST_HOME/other"
+  echo "legacy" > "$TEST_HOME/other/.bashrc"
+  ln -s "$TEST_HOME/other/.bashrc" "$TEST_HOME/.bashrc"
+
+  HOME="$TEST_HOME" bash ./install.sh --auto --link-dotfiles --prefix "$TEST_HOME/.get-bashed" --force
+
+  run readlink "$TEST_HOME/.bashrc"
+  assert_success
+  [[ "$output" == "$TEST_HOME/.get-bashed/bashrc" ]]
+}

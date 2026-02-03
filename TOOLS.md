@@ -108,6 +108,7 @@ manager (Homebrew, apt, dnf, yum). Otherwise it falls back to plain prompts.
 
 ## Listing and Dry Run
 
+- `./install.sh` is a POSIX bootstrap that runs `install.bash`.
 - `./install.sh --list` shows the catalog of installers.
 - `./install.sh --list-profiles` shows available profiles.
 - `./install.sh --list-features` shows available features.

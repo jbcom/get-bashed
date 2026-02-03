@@ -7,7 +7,8 @@ This repository contains the **get-bashed** modular Bash setup. It is intended t
 - `bashrc` / `bash_profile`: entrypoints sourced by the installer.
 - `bashrc.d/`: ordered modules (`00-` to `99-`) loaded in sequence.
 - `bin/`: curated helper scripts meant to be portable and non-sensitive.
-- `install.sh`: idempotent installer that wires user dotfiles.
+- `install.sh`: POSIX bootstrap that re-execs `install.bash`.
+- `install.bash`: idempotent installer that wires user dotfiles.
 - `installers/`: dependency-aware installers with metadata.
 - `tests/`: BATS test suite.
 - `.github/workflows/`: CI and release automation.
