@@ -27,4 +27,5 @@ repos:
     hooks:
       - id: bashate
         entry: bashate --ignore=E003,E006
-        exclude: \\.bats$
+        files: ^(bin/.*|.*\\.(sh|bash)$)
+        exclude: ^tests/.*\\.bats$
