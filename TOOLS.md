@@ -64,6 +64,8 @@ Enable components via search:
 ```bash
 get_bashed_component enable git docker
 ```
+If bash-it isn't available, it will try asdf, brew, or system package managers,
+then fall back to known git/curl sources.
 
 ## Vim (amix/vimrc)
 
