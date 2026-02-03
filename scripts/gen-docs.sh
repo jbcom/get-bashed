@@ -45,9 +45,14 @@ fix_toc_anchors() {
 
 ensure_eof() {
   local file="$1"
-  if [[ -s "$file" ]] && [[ -n "$(tail -c 1 "$file")" ]]; then
-    printf "\n" >> "$file"
-  fi
+  python3 - "$file" <<'PY'
+import sys
+from pathlib import Path
+path = Path(sys.argv[1])
+data = path.read_bytes()
+if not data.endswith(b"\n"):
+    path.write_bytes(data + b"\n")
+PY
 }
 
 for doc in "$ROOT_DIR/docs/INSTALLER.md" "$ROOT_DIR/docs/INSTALLERS_HELPERS.md" "$ROOT_DIR/docs/INSTALLERS.md"; do

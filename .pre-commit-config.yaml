@@ -25,4 +25,4 @@ repos:
     rev: 2.1.1
     hooks:
       - id: bashate
-        args: [-i, E003 -i, E006]
+        args: ["-i", "E003", "-i", "E006"]
