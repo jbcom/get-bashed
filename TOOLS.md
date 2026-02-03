@@ -67,6 +67,11 @@ Install the Awesome vimrc:
 ./install.sh --install vimrc
 ```
 
+Install the Basic vimrc:
+```bash
+./install.sh --install vimrc --vimrc-mode basic
+```
+
 ## Doppler (Optional)
 
 If you use Doppler for secrets, install the CLI and enable:

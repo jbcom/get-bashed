@@ -19,5 +19,12 @@ install_vimrc() {
   fi
   mkdir -p "$prefix/vendor"
   git clone --depth=1 https://github.com/amix/vimrc.git "$target"
-  sh "$target/install_awesome_vimrc.sh"
+  case "${GET_BASHED_VIMRC_MODE:-awesome}" in
+    basic)
+      sh "$target/install_basic_vimrc.sh"
+      ;;
+    *)
+      sh "$target/install_awesome_vimrc.sh"
+      ;;
+  esac
 }

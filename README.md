@@ -49,6 +49,11 @@ Available installers (comma list):
 - `bash_it` (bash-it framework)
 - `vimrc` (amix/vimrc)
 
+Vim mode (default `awesome`):
+```bash
+./install.sh --install vimrc --vimrc-mode basic
+```
+
 ## Support
 
 - Issues and feature requests: use GitHub Issues for this repository.

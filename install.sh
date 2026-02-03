@@ -28,6 +28,7 @@ Usage: install.sh [--prefix PATH] [--force] [--with-ui]
                   [--profiles minimal|dev|ops[,..]]
                   [--features gnu_over_bsd,build_flags,...]
                   [--install brew,asdf,doppler,...]
+                  [--vimrc-mode awesome|basic]
                   [--list] [--list-profiles] [--list-features] [--list-installers]
                   [--dry-run]
 
@@ -53,6 +54,7 @@ LIST_PROFILES=0
 LIST_FEATURES=0
 LIST_INSTALLERS=0
 GROUP_INSTALLS=""
+VIMRC_MODE="awesome"
 
 # Feature flags (defaults)
 GET_BASHED_GNU=0
@@ -100,6 +102,13 @@ while [[ $# -gt 0 ]]; do
         exit 1
       fi
       INSTALLS="$2"; shift 2 ;;
+    --vimrc-mode)
+      if [[ $# -lt 2 ]]; then
+        echo "Error: --vimrc-mode requires a value" >&2
+        usage
+        exit 1
+      fi
+      VIMRC_MODE="$2"; shift 2 ;;
     --list)
       LIST=1; shift ;;
     --list-profiles)
@@ -298,6 +307,11 @@ if [[ "$WITH_UI" -eq 1 ]] && [[ "$AUTO" -eq 0 ]]; then
   install_dialog || true
 fi
 
+# If stdin isn't a TTY, default to non-interactive.
+if [[ ! -t 0 ]] && [[ "$AUTO" -eq 0 ]]; then
+  AUTO=1
+fi
+
 # Load installer registry early for interactive UI.
 load_installers
 
@@ -432,6 +446,15 @@ if [[ -n "${GROUP_INSTALLS:-}" ]]; then
   fi
 fi
 
+# Validate vimrc mode
+case "$VIMRC_MODE" in
+  awesome|basic) ;;
+  *)
+    echo "Invalid --vimrc-mode: $VIMRC_MODE (expected awesome|basic)" >&2
+    exit 1
+    ;;
+esac
+
 # Deduplicate installers
 if [[ -n "$INSTALLS" ]]; then
   INSTALLS="$(echo "$INSTALLS" | tr ',' '\n' | awk 'NF && !seen[$0]++' | paste -sd, -)"
@@ -485,6 +508,7 @@ fi
 
 if [[ -n "$INSTALLS" ]]; then
   export GET_BASHED_HOME="$PREFIX"
+  export GET_BASHED_VIMRC_MODE="$VIMRC_MODE"
   for id in $(split_csv "$INSTALLS"); do
     run_install "$id"
   done
@@ -526,6 +550,7 @@ export GET_BASHED_AUTO_TOOLS=${GET_BASHED_AUTO_TOOLS}
 export GET_BASHED_SSH_AGENT=${GET_BASHED_SSH_AGENT}
 export GET_BASHED_USE_DOPPLER=${GET_BASHED_USE_DOPPLER}
 export GET_BASHED_USE_BASH_IT=${GET_BASHED_USE_BASH_IT}
+export GET_BASHED_VIMRC_MODE=${VIMRC_MODE}
 __CFG__
 
 # @internal
