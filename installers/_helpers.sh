@@ -197,9 +197,12 @@ component_install() {
     local prefix="${GET_BASHED_HOME:-$HOME/.get-bashed}"
     local target="$prefix/vendor/$term"
     mkdir -p "$prefix/vendor"
-    git clone --depth=1 "${GET_BASHED_GIT_SOURCES[$term]}" "$target"
+    if ! git clone --depth=1 "${GET_BASHED_GIT_SOURCES[$term]}" "$target"; then
+      echo "Failed to clone $term" >&2
+      return 1
+    fi
     if [[ -n "${GET_BASHED_GIT_POST[$term]:-}" ]]; then
-      (cd "$target" && sh "${GET_BASHED_GIT_POST[$term]}")
+      (cd "$target" && sh "${GET_BASHED_GIT_POST[$term]}") || return 1
     fi
     return 0
   fi
@@ -207,9 +210,16 @@ component_install() {
   if [[ -n "${GET_BASHED_CURL_SOURCES[$term]:-}" ]] && _using_curl; then
     local tmp_dir
     tmp_dir="$(mktemp -d)"
-    curl -fsSL "${GET_BASHED_CURL_SOURCES[$term]}" -o "$tmp_dir/install.sh"
+    if ! curl -fsSL "${GET_BASHED_CURL_SOURCES[$term]}" -o "$tmp_dir/install.sh"; then
+      rm -rf "$tmp_dir"
+      echo "Failed to download installer for $term" >&2
+      return 1
+    fi
     local cmd="${GET_BASHED_CURL_CMD[$term]:-bash}"
-    $cmd "$tmp_dir/install.sh"
+    if ! $cmd "$tmp_dir/install.sh"; then
+      rm -rf "$tmp_dir"
+      return 1
+    fi
     rm -rf "$tmp_dir"
     return 0
   fi
@@ -277,8 +287,7 @@ install_tool() {
           return 0
         fi
         mkdir -p "$prefix/vendor"
-        git clone --depth=1 "$url" "$target"
-        return 0
+        git clone --depth=1 "$url" "$target" && return 0
         ;;
       curl)
         _using_curl || continue
@@ -286,9 +295,15 @@ install_tool() {
         [[ -n "$url" ]] || continue
         local tmp_dir
         tmp_dir="$(mktemp -d)"
-        curl -fsSL "$url" -o "$tmp_dir/install.sh"
+        if ! curl -fsSL "$url" -o "$tmp_dir/install.sh"; then
+          rm -rf "$tmp_dir"
+          return 1
+        fi
         local cmd="${TOOL_CURL_CMD[$id]:-bash}"
-        $cmd "$tmp_dir/install.sh"
+        if ! $cmd "$tmp_dir/install.sh"; then
+          rm -rf "$tmp_dir"
+          return 1
+        fi
         rm -rf "$tmp_dir"
         return 0
         ;;
@@ -493,6 +508,11 @@ install_actionlint() {
 
   if ! _using_curl; then
     echo "curl is required to install actionlint" >&2
+    return 1
+  fi
+
+  if ! command -v python3 >/dev/null 2>&1; then
+    echo "python3 is required to resolve actionlint release metadata" >&2
     return 1
   fi
 

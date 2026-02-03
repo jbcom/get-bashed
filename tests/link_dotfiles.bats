@@ -42,6 +42,6 @@ load test_helper
   run test -L "$HOME/.bashrc"
   assert_success
   assert_dir_exist "$HOME/.get-bashed/backup"
-  run ls "$HOME/.get-bashed/backup" | grep -E '^bashrc\.[0-9]+'
+  run bash -c 'ls "$1" | grep -E "^bashrc\\.[0-9]+"' _ "$HOME/.get-bashed/backup"
   assert_success
 }
