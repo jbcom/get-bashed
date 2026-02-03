@@ -31,6 +31,7 @@ Usage: install.sh [--prefix PATH] [--force] [--with-ui]
                   [--install brew,asdf,doppler,...]
                   [--vimrc-mode awesome|basic]
                   [--link-dotfiles]
+                  [--name "Full Name"] [--email "me@example.com"]
                   [--list] [--list-profiles] [--list-features] [--list-installers]
                   [--dry-run]
 
@@ -60,6 +61,8 @@ LIST_INSTALLERS=0
 GROUP_INSTALLS=""
 VIMRC_MODE="awesome"
 LINK_DOTFILES=0
+USER_NAME=""
+USER_EMAIL=""
 
 # Feature flags (defaults)
 GET_BASHED_GNU=0
@@ -116,6 +119,20 @@ while [[ $# -gt 0 ]]; do
       VIMRC_MODE="$2"; shift 2 ;;
     --link-dotfiles)
       LINK_DOTFILES=1; shift ;;
+    --name|-n)
+      if [[ $# -lt 2 ]]; then
+        echo "Error: --name requires a value" >&2
+        usage
+        exit 1
+      fi
+      USER_NAME="$2"; shift 2 ;;
+    --email|-e)
+      if [[ $# -lt 2 ]]; then
+        echo "Error: --email requires a value" >&2
+        usage
+        exit 1
+      fi
+      USER_EMAIL="$2"; shift 2 ;;
     --list)
       LIST=1; shift ;;
     --list-profiles)
@@ -408,6 +425,13 @@ if [[ "$AUTO" -eq 0 ]]; then
         INSTALLS="${INSTALLS// /,}"
       fi
 
+      if [[ -z "$USER_NAME" ]]; then
+        USER_NAME=$(dialog --clear --title "get-bashed" --inputbox "Git user.name" 8 60 "${USER_NAME}" 3>&1 1>&2 2>&3) || true
+      fi
+      if [[ -z "$USER_EMAIL" ]]; then
+        USER_EMAIL=$(dialog --clear --title "get-bashed" --inputbox "Git user.email" 8 60 "${USER_EMAIL}" 3>&1 1>&2 2>&3) || true
+      fi
+
       dialog --clear --title "get-bashed" --yesno \
         "Proceed with installation?\n\nFeatures: gnu_over_bsd=${GET_BASHED_GNU} build_flags=${GET_BASHED_BUILD_FLAGS} auto_tools=${GET_BASHED_AUTO_TOOLS} ssh_agent=${GET_BASHED_SSH_AGENT} doppler_env=${GET_BASHED_USE_DOPPLER} bash_it=${GET_BASHED_USE_BASH_IT}\nInstallers: ${INSTALLS}" \
         12 70 || exit 0
@@ -434,9 +458,18 @@ if [[ "$AUTO" -eq 0 ]]; then
         INSTALLS="$INSTALLS_INPUT"
       fi
 
+      if [[ -z "$USER_NAME" ]]; then
+        read -r -p "Git user.name (enter to skip): " USER_NAME
+      fi
+      if [[ -z "$USER_EMAIL" ]]; then
+        read -r -p "Git user.email (enter to skip): " USER_EMAIL
+      fi
+
       echo "Proceeding with:"
       echo "  Features: gnu_over_bsd=${GET_BASHED_GNU} build_flags=${GET_BASHED_BUILD_FLAGS} auto_tools=${GET_BASHED_AUTO_TOOLS} ssh_agent=${GET_BASHED_SSH_AGENT} doppler_env=${GET_BASHED_USE_DOPPLER} bash_it=${GET_BASHED_USE_BASH_IT}"
       echo "  Installers: ${INSTALLS}"
+      [[ -n "$USER_NAME" ]] && echo "  Git user.name: ${USER_NAME}"
+      [[ -n "$USER_EMAIL" ]] && echo "  Git user.email: ${USER_EMAIL}"
       prompt_yes_no "Continue?" || exit 0
     fi
   fi
@@ -557,6 +590,8 @@ export GET_BASHED_USE_DOPPLER=${GET_BASHED_USE_DOPPLER}
 export GET_BASHED_USE_BASH_IT=${GET_BASHED_USE_BASH_IT}
 export GET_BASHED_VIMRC_MODE=${VIMRC_MODE}
 export GET_BASHED_LINK_DOTFILES=${LINK_DOTFILES}
+export GET_BASHED_USER_NAME="${USER_NAME}"
+export GET_BASHED_USER_EMAIL="${USER_EMAIL}"
 __CFG__
 
 # @internal
@@ -600,7 +635,29 @@ link_dotfile() {
   ln -s "$src" "$dst"
 }
 
+apply_gitconfig() {
+  local cfg="$PREFIX/gitconfig"
+  [[ -f "$cfg" ]] || return 0
+  local name_esc email_esc
+  name_esc="${USER_NAME//\\/\\\\}"
+  name_esc="${name_esc//|/\\|}"
+  email_esc="${USER_EMAIL//\\/\\\\}"
+  email_esc="${email_esc//|/\\|}"
+  if [[ -n "$USER_NAME" ]]; then
+    if grep -q "^[[:space:]]*name[[:space:]]*=" "$cfg"; then
+      sed -i.bak -E "s|^[[:space:]]*name[[:space:]]*=.*|    name = ${name_esc}|" "$cfg"
+    fi
+  fi
+  if [[ -n "$USER_EMAIL" ]]; then
+    if grep -q "^[[:space:]]*email[[:space:]]*=" "$cfg"; then
+      sed -i.bak -E "s|^[[:space:]]*email[[:space:]]*=.*|    email = ${email_esc}|" "$cfg"
+    fi
+  fi
+  rm -f "$cfg.bak"
+}
+
 if [[ "$LINK_DOTFILES" -eq 1 ]]; then
+  apply_gitconfig
   link_dotfile "bashrc"
   link_dotfile "bash_profile"
   link_dotfile "inputrc"

@@ -114,6 +114,7 @@ manager (Homebrew, apt, dnf, yum). Otherwise it falls back to plain prompts.
 - `./install.sh --list-installers` shows the installer catalog.
 - `./install.sh --dry-run --install <list>` shows what would be installed.
 - `./install.sh --link-dotfiles` backs up and symlinks shell dotfiles to `~/.get-bashed`.
+- `./install.sh --name "Full Name" --email "me@example.com"` sets git identity.
 
 ## Docs
 
