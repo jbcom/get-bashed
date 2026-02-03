@@ -87,7 +87,9 @@ auto_exec() {
       shift
     done
   else
-    while [[ $# -gt 0 ]]; do shift; done
+    while [[ $# -gt 0 ]]; do
+      shift
+    done
   fi
   "$cmd" "${flags[@]}"
 }

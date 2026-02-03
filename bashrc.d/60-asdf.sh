@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC1091
 # @file 60-asdf
 # @brief get-bashed module: 60-asdf
 # @description

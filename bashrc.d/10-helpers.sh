@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC1090
 # @file 10-helpers
 # @brief get-bashed module: 10-helpers
 # @description

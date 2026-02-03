@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC1090
 # @file 99-secrets
 # @brief get-bashed module: 99-secrets
 # @description
