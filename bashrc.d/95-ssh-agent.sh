@@ -25,6 +25,10 @@ if [[ "${GET_BASHED_SSH_AGENT:-0}" == "1" ]] && [[ -t 1 ]]; then
     fi
   fi
 
-  [[ -f "$HOME/.ssh/id_rsa" ]] && ssh-add "$HOME/.ssh/id_rsa" 2>/dev/null || true
-  [[ -f "$HOME/.ssh/id_ed25519" ]] && ssh-add "$HOME/.ssh/id_ed25519" 2>/dev/null || true
+  if [[ -f "$HOME/.ssh/id_rsa" ]]; then
+    ssh-add "$HOME/.ssh/id_rsa" 2>/dev/null || true
+  fi
+  if [[ -f "$HOME/.ssh/id_ed25519" ]]; then
+    ssh-add "$HOME/.ssh/id_ed25519" 2>/dev/null || true
+  fi
 fi

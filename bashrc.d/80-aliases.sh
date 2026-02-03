@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # @file 80-aliases
 # @brief get-bashed module: 80-aliases
 # @description

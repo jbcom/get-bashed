@@ -8,6 +8,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+# shellcheck disable=SC1091
 . "$ROOT_DIR/scripts/ci-setup.sh" "pre_commit,actionlint,shellcheck,bashate,shdoc"
 
 if command -v shdoc >/dev/null 2>&1; then

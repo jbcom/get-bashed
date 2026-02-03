@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # @file 50-tool-init
 # @brief get-bashed module: 50-tool-init
 # @description

@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # @file 00-options
 # @brief get-bashed module: 00-options
 # @description

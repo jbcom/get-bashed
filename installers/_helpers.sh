@@ -64,7 +64,7 @@ _ensure_tools_loaded() {
   _tools_loaded && return 0
   local repo_dir
   repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-  # shellcheck disable=SC1090
+  # shellcheck disable=SC1090,SC1091
   source "$repo_dir/installers/tools.sh"
 }
 
@@ -160,7 +160,7 @@ _bash_it_search() {
   local action="$1"; shift
   local prefix="${GET_BASHED_HOME:-$HOME/.get-bashed}"
   local bash_it="$prefix/vendor/bash-it"
-  # shellcheck disable=SC1090
+  # shellcheck disable=SC1090,SC1091
   source "$bash_it/bash_it.sh"
   NO_COLOR=1 bash-it search "$@" "--${action}"
 }

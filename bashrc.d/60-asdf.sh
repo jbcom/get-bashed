@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # @file 60-asdf
 # @brief get-bashed module: 60-asdf
 # @description
