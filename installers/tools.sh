@@ -19,6 +19,7 @@ declare -A TOOL_GIT_URL
 declare -A TOOL_CURL_URL
 declare -A TOOL_CURL_CMD
 declare -A TOOL_HANDLER
+declare -A TOOL_OPT_DEPS
 
 tool_register() {
   local id="$1" desc="$2" deps="$3" platforms="$4" methods="$5"
@@ -54,6 +55,10 @@ tool_handler() {
   TOOL_HANDLER["$id"]="$handler"
 }
 
+tool_opt_deps() {
+  local id="$1" spec="$2"
+  TOOL_OPT_DEPS["$id"]="$spec"
+}
 # Core tools
 tool_register brew "Homebrew/Linuxbrew installer" "" "macos,linux,wsl" "curl"
 tool_curl brew "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh" "/bin/bash"
@@ -106,6 +111,7 @@ tool_handler gnu_tools "install_gnu_tools"
 
 tool_register git "git" "" "macos,linux,wsl" "brew,apt,dnf,yum,pacman"
 tool_pkgs git "git" "git" "git" "git" "git"
+tool_opt_deps git "GET_BASHED_GIT_SIGNING:gnupg"
 
 tool_register git_lfs "git-lfs" "" "macos,linux,wsl" "brew,apt,dnf,yum"
 tool_pkgs git_lfs "git-lfs" "git-lfs" "git-lfs" "git-lfs" ""

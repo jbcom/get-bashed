@@ -132,6 +132,7 @@ Use `--features` with comma-separated values:
 - `ssh_agent`
 - `doppler_env`
 - `bash_it`
+- `git_signing`
 - `dev_tools`
 - `ops_tools`
 

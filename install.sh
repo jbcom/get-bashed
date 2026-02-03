@@ -71,6 +71,7 @@ GET_BASHED_AUTO_TOOLS=0
 GET_BASHED_SSH_AGENT=0
 GET_BASHED_USE_DOPPLER=0
 GET_BASHED_USE_BASH_IT=0
+GET_BASHED_GIT_SIGNING=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -205,6 +206,7 @@ apply_feature() {
     ssh_agent) GET_BASHED_SSH_AGENT=$v ;;
     doppler_env) GET_BASHED_USE_DOPPLER=$v ;;
     bash_it) GET_BASHED_USE_BASH_IT=$v ;;
+    git_signing) GET_BASHED_GIT_SIGNING=$v ;;
     dev_tools) GROUP_INSTALLS="${GROUP_INSTALLS},rg,fd,bat,fzf,jq,yq,tree,direnv,starship,nodejs,python,bash" ;;
     ops_tools) GROUP_INSTALLS="${GROUP_INSTALLS},gh,git_lfs,terraform,awscli,kubectl,helm,stern,doppler,nodejs,python,java,bash" ;;
     *) return 1 ;;
@@ -249,6 +251,7 @@ load_installers() {
     fi
     INSTALLERS="$INSTALLERS $id"
     printf -v "INSTALL_DEPS_${id}" "%s" "${TOOL_DEPS[$id]:-}"
+    printf -v "INSTALL_OPT_DEPS_${id}" "%s" "${TOOL_OPT_DEPS[$id]:-}"
     printf -v "INSTALL_DESC_${id}" "%s" "${TOOL_DESC[$id]:-}"
     printf -v "INSTALL_PLATFORMS_${id}" "%s" "${TOOL_PLATFORMS[$id]:-}"
   done
@@ -258,7 +261,26 @@ load_installers() {
 get_deps() {
   local id="$1"
   local var="INSTALL_DEPS_${id}"
-  echo "${!var:-}"
+  local deps="${!var:-}"
+  local opt_var="INSTALL_OPT_DEPS_${id}"
+  local opt="${!opt_var:-}"
+  if [[ -n "$opt" ]]; then
+    IFS=';' read -r -a _parts <<<"$opt"
+    local part key list val
+    for part in "${_parts[@]}"; do
+      key="${part%%:*}"
+      list="${part#*:}"
+      val="${!key:-0}"
+      if [[ "$val" == "1" ]]; then
+        if [[ -n "$deps" ]]; then
+          deps="${deps} ${list}"
+        else
+          deps="${list}"
+        fi
+      fi
+    done
+  fi
+  echo "${deps}"
 }
 
 # @internal
@@ -390,6 +412,7 @@ if [[ "$AUTO" -eq 0 ]]; then
         ssh_agent "Auto-start ssh-agent" "$( [[ "$GET_BASHED_SSH_AGENT" -eq 1 ]] && echo on || echo off )" \
         doppler_env "Enable Doppler env usage" "$( [[ "$GET_BASHED_USE_DOPPLER" -eq 1 ]] && echo on || echo off )" \
         bash_it "Enable bash-it (if installed)" "$( [[ "$GET_BASHED_USE_BASH_IT" -eq 1 ]] && echo on || echo off )" \
+        git_signing "Enable git signing (gnupg)" "$( [[ "$GET_BASHED_GIT_SIGNING" -eq 1 ]] && echo on || echo off )" \
         dev_tools "Developer tool bundle" off \
         ops_tools "Ops tool bundle" off \
         3>&1 1>&2 2>&3) || true
@@ -400,6 +423,7 @@ if [[ "$AUTO" -eq 0 ]]; then
       GET_BASHED_SSH_AGENT=0
       GET_BASHED_USE_DOPPLER=0
       GET_BASHED_USE_BASH_IT=0
+      GET_BASHED_GIT_SIGNING=0
 
       for choice in $CHOICES; do
         apply_feature "${choice//\"/}" || true
@@ -433,7 +457,7 @@ if [[ "$AUTO" -eq 0 ]]; then
       fi
 
       dialog --clear --title "get-bashed" --yesno \
-        "Proceed with installation?\n\nFeatures: gnu_over_bsd=${GET_BASHED_GNU} build_flags=${GET_BASHED_BUILD_FLAGS} auto_tools=${GET_BASHED_AUTO_TOOLS} ssh_agent=${GET_BASHED_SSH_AGENT} doppler_env=${GET_BASHED_USE_DOPPLER} bash_it=${GET_BASHED_USE_BASH_IT}\nInstallers: ${INSTALLS}" \
+        "Proceed with installation?\n\nFeatures: gnu_over_bsd=${GET_BASHED_GNU} build_flags=${GET_BASHED_BUILD_FLAGS} auto_tools=${GET_BASHED_AUTO_TOOLS} ssh_agent=${GET_BASHED_SSH_AGENT} doppler_env=${GET_BASHED_USE_DOPPLER} bash_it=${GET_BASHED_USE_BASH_IT} git_signing=${GET_BASHED_GIT_SIGNING}\nInstallers: ${INSTALLS}" \
         12 70 || exit 0
     fi
   else
@@ -450,6 +474,7 @@ if [[ "$AUTO" -eq 0 ]]; then
       prompt_yes_no "Start ssh-agent automatically (ssh_agent)?" && GET_BASHED_SSH_AGENT=1
       prompt_yes_no "Enable Doppler env support (doppler_env)?" && GET_BASHED_USE_DOPPLER=1
       prompt_yes_no "Enable bash-it (bash_it)?" && GET_BASHED_USE_BASH_IT=1
+      prompt_yes_no "Enable git signing (git_signing)?" && GET_BASHED_GIT_SIGNING=1
       prompt_yes_no "Include developer tool bundle (dev_tools)?" && apply_feature "dev_tools"
       prompt_yes_no "Include ops tool bundle (ops_tools)?" && apply_feature "ops_tools"
 
@@ -466,7 +491,7 @@ if [[ "$AUTO" -eq 0 ]]; then
       fi
 
       echo "Proceeding with:"
-      echo "  Features: gnu_over_bsd=${GET_BASHED_GNU} build_flags=${GET_BASHED_BUILD_FLAGS} auto_tools=${GET_BASHED_AUTO_TOOLS} ssh_agent=${GET_BASHED_SSH_AGENT} doppler_env=${GET_BASHED_USE_DOPPLER} bash_it=${GET_BASHED_USE_BASH_IT}"
+      echo "  Features: gnu_over_bsd=${GET_BASHED_GNU} build_flags=${GET_BASHED_BUILD_FLAGS} auto_tools=${GET_BASHED_AUTO_TOOLS} ssh_agent=${GET_BASHED_SSH_AGENT} doppler_env=${GET_BASHED_USE_DOPPLER} bash_it=${GET_BASHED_USE_BASH_IT} git_signing=${GET_BASHED_GIT_SIGNING}"
       echo "  Installers: ${INSTALLS}"
       [[ -n "$USER_NAME" ]] && echo "  Git user.name: ${USER_NAME}"
       [[ -n "$USER_EMAIL" ]] && echo "  Git user.email: ${USER_EMAIL}"
@@ -516,6 +541,7 @@ if [[ "$LIST_FEATURES" -eq 1 ]]; then
   echo "  ssh_agent"
   echo "  doppler_env"
   echo "  bash_it"
+  echo "  git_signing"
   echo "  dev_tools (bundle)"
   echo "  ops_tools (bundle)"
   exit 0
@@ -588,6 +614,7 @@ export GET_BASHED_AUTO_TOOLS=${GET_BASHED_AUTO_TOOLS}
 export GET_BASHED_SSH_AGENT=${GET_BASHED_SSH_AGENT}
 export GET_BASHED_USE_DOPPLER=${GET_BASHED_USE_DOPPLER}
 export GET_BASHED_USE_BASH_IT=${GET_BASHED_USE_BASH_IT}
+export GET_BASHED_GIT_SIGNING=${GET_BASHED_GIT_SIGNING}
 export GET_BASHED_VIMRC_MODE=${VIMRC_MODE}
 export GET_BASHED_LINK_DOTFILES=${LINK_DOTFILES}
 export GET_BASHED_USER_NAME="${USER_NAME}"

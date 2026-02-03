@@ -29,6 +29,11 @@ sh install.sh --link-dotfiles --name "Jane Doe" --email "jane@example.com"
 This will link `bashrc`, `bash_profile`, `inputrc`, `bash_aliases`, `vimrc`,
 and `gitconfig` to the versions under `~/.get-bashed`.
 
+Optional git signing (installs `gnupg` when enabled):
+```bash
+sh install.sh --features git_signing --install git
+```
+
 ## Learn More
 
 Docs: `https://jonbogaty.com/get-bashed`
