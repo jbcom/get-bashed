@@ -25,4 +25,4 @@ repos:
     rev: 2.1.1
     hooks:
       - id: bashate
-        args: [--ignore=E003,E006]
+        args: [--ignore, E003,E006]

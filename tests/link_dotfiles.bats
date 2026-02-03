@@ -6,28 +6,29 @@ load test_helper
   TMPDIR="$(mktemp -d)"
   HOME="$TMPDIR/home"
   mkdir -p "$HOME"
+  TEST_HOME="$HOME"
 
   USER_NAME="Jane Doe"
   USER_EMAIL="jane@example.com"
 
-  HOME="$HOME" bash ./install.sh --auto --link-dotfiles --name "$USER_NAME" --email "$USER_EMAIL" --prefix "$HOME/.get-bashed" --force
+  HOME="$TEST_HOME" bash ./install.sh --auto --link-dotfiles --name "$USER_NAME" --email "$USER_EMAIL" --prefix "$TEST_HOME/.get-bashed" --force
 
-  run test -L "$HOME/.bashrc"
+  run test -L "$TEST_HOME/.bashrc"
   assert_success
-  run test -L "$HOME/.bash_profile"
+  run test -L "$TEST_HOME/.bash_profile"
   assert_success
-  run test -L "$HOME/.inputrc"
+  run test -L "$TEST_HOME/.inputrc"
   assert_success
-  run test -L "$HOME/.bash_aliases"
+  run test -L "$TEST_HOME/.bash_aliases"
   assert_success
-  run test -L "$HOME/.vimrc"
+  run test -L "$TEST_HOME/.vimrc"
   assert_success
-  run test -L "$HOME/.gitconfig"
+  run test -L "$TEST_HOME/.gitconfig"
   assert_success
 
-  run grep -F "name = ${USER_NAME}" "$HOME/.get-bashed/gitconfig"
+  run grep -F "name = ${USER_NAME}" "$TEST_HOME/.get-bashed/gitconfig"
   assert_success
-  run grep -F "email = ${USER_EMAIL}" "$HOME/.get-bashed/gitconfig"
+  run grep -F "email = ${USER_EMAIL}" "$TEST_HOME/.get-bashed/gitconfig"
   assert_success
 }
 
@@ -35,13 +36,14 @@ load test_helper
   TMPDIR="$(mktemp -d)"
   HOME="$TMPDIR/home"
   mkdir -p "$HOME"
+  TEST_HOME="$HOME"
   echo "legacy" > "$HOME/.bashrc"
 
-  HOME="$HOME" bash ./install.sh --auto --link-dotfiles --prefix "$HOME/.get-bashed" --force
+  HOME="$TEST_HOME" bash ./install.sh --auto --link-dotfiles --prefix "$TEST_HOME/.get-bashed" --force
 
-  run test -L "$HOME/.bashrc"
+  run test -L "$TEST_HOME/.bashrc"
   assert_success
-  assert_dir_exist "$HOME/.get-bashed/backup"
-  run bash -c 'ls "$1" | grep -E "^bashrc\\.[0-9]+"' _ "$HOME/.get-bashed/backup"
+  assert_dir_exist "$TEST_HOME/.get-bashed/backup"
+  run bash -c 'ls "$1" | grep -E "^bashrc\\.[0-9]+"' _ "$TEST_HOME/.get-bashed/backup"
   assert_success
 }

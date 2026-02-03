@@ -4,14 +4,15 @@ load test_helper
 
 @test "installer writes to prefix and wires bashrc" {
   TMPDIR="$(mktemp -d)"
-  HOME="$TMPDIR" bash ./install.sh --prefix "$TMPDIR/.get-bashed" --force
+  TEST_HOME="$TMPDIR"
+  HOME="$TEST_HOME" bash ./install.sh --prefix "$TEST_HOME/.get-bashed" --force
 
-  assert_file_exist "$TMPDIR/.get-bashed/bashrc"
-  assert_dir_exist "$TMPDIR/.get-bashed/bashrc.d"
+  assert_file_exist "$TEST_HOME/.get-bashed/bashrc"
+  assert_dir_exist "$TEST_HOME/.get-bashed/bashrc.d"
 
-  run grep -F "# get-bashed: source modular bashrc" "$TMPDIR/.bashrc"
+  run grep -F "# get-bashed: source modular bashrc" "$TEST_HOME/.bashrc"
   assert_success
 
-  run grep -F "# get-bashed: source login bash_profile" "$TMPDIR/.bash_profile"
+  run grep -F "# get-bashed: source login bash_profile" "$TEST_HOME/.bash_profile"
   assert_success
 }

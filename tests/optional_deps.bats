@@ -6,8 +6,9 @@ load test_helper
   TMPDIR="$(mktemp -d)"
   HOME="$TMPDIR/home"
   mkdir -p "$HOME"
+  TEST_HOME="$HOME"
 
-  HOME="$HOME" bash ./install.sh --auto --prefix "$HOME/.get-bashed" --force --features git_signing --install git --dry-run > "$TMPDIR/out"
+  HOME="$TEST_HOME" bash ./install.sh --auto --prefix "$TEST_HOME/.get-bashed" --force --features git_signing --install git --dry-run > "$TMPDIR/out"
 
   run grep -F "would install: gnupg" "$TMPDIR/out"
   assert_success

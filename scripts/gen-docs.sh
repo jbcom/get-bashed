@@ -43,8 +43,16 @@ fix_toc_anchors() {
   mv "$tmp" "$file"
 }
 
+ensure_eof() {
+  local file="$1"
+  if [[ -s "$file" ]] && [[ -n "$(tail -c 1 "$file")" ]]; then
+    printf "\n" >> "$file"
+  fi
+}
+
 for doc in "$ROOT_DIR/docs/INSTALLER.md" "$ROOT_DIR/docs/INSTALLERS_HELPERS.md" "$ROOT_DIR/docs/INSTALLERS.md"; do
   fix_toc_anchors "$doc"
+  ensure_eof "$doc"
 done
 
 # Combine all runtime modules
@@ -63,6 +71,7 @@ shopt -u nullglob
 shdoc < "$TMP_MODULES" > "$ROOT_DIR/docs/MODULES.md"
 rm -f "$TMP_MODULES"
 fix_toc_anchors "$ROOT_DIR/docs/MODULES.md"
+ensure_eof "$ROOT_DIR/docs/MODULES.md"
 
 # Generate index
 {
@@ -75,5 +84,6 @@ fix_toc_anchors "$ROOT_DIR/docs/MODULES.md"
     echo "- [$base]($base)"
   done
 } > "$ROOT_DIR/docs/INDEX.md"
+ensure_eof "$ROOT_DIR/docs/INDEX.md"
 
 echo "Docs generated under docs/"

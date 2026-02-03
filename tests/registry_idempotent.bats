@@ -6,8 +6,9 @@ load test_helper
   TMPDIR="$(mktemp -d)"
   HOME="$TMPDIR/home"
   mkdir -p "$HOME"
+  TEST_HOME="$HOME"
 
-  HOME="$HOME" bash ./install.sh --auto --list-installers > "$TMPDIR/list"
+  HOME="$TEST_HOME" bash ./install.sh --auto --list-installers > "$TMPDIR/list"
 
   run grep -F " - git" "$TMPDIR/list"
   assert_success

@@ -36,3 +36,43 @@ This project prioritizes safe defaults, explicit install paths, and minimal priv
 - `install.sh` and scripts in `installers/` are security-sensitive.
 - Any `curl` or `git` installation path must be verified and pinned when feasible.
 - Changes that modify PATH, shell startup, or secret handling are in scope.
+
+## Threat Model (Summary)
+
+### Assets
+
+- User secrets in `secrets.d/` and any injected environment variables.
+- Shell startup integrity (`bashrc`, `bash_profile`, `bashrc.d/`).
+- Installer integrity (`install.sh`, `installers/`, `scripts/ci-setup.sh`).
+- User PATH and toolchain selection (asdf/brew/system).
+
+### Adversaries
+
+- Supply-chain tampering (compromised GitHub releases, mirrors, or plugins).
+- Local adversary modifying `~/.get-bashed` or symlinked dotfiles.
+- Malicious PRs introducing unsafe shell behavior.
+
+### Common Risks
+
+- Unpinned downloads or unverified `curl`/`git` installers.
+- Command injection via untrusted input in shell scripts.
+- PATH poisoning via incorrect ordering or untrusted directories.
+- Secrets leakage via logs or generated config files.
+
+### In-Scope Surfaces
+
+- Installer inputs, profiles, and feature handling.
+- Tool registry definitions and dependency ordering.
+- Any code touching secrets, PATH, or shell init files.
+
+### Out of Scope
+
+- Upstream security issues in third-party tools (report to upstream).
+- User-specific misconfiguration outside of get-bashed artifacts.
+
+## Hardening Expectations
+
+- Avoid `eval` and unsafe command substitutions.
+- Validate all user input that affects execution paths.
+- Prefer pinned versions and checksums where feasible.
+- Keep idempotency to avoid repeated side effects.

@@ -44,12 +44,12 @@ def format_bytes(bytes, precision=2):
     """Format bytes to human-readable format."""
     if bytes == 0:
         return "0 B"
-    
+
     size_names = ["B", "KB", "MB", "GB", "TB"]
     i = int(math.floor(math.log(bytes, 1024)))
     p = math.pow(1024, i)
     s = round(bytes / p, precision)
-    
+
     return f"{s} {size_names[i]}"
 
 def parse_vm_stat():
@@ -57,18 +57,18 @@ def parse_vm_stat():
     output = get_command_output(["vm_stat"])
     if not output:
         return {}
-    
+
     # Extract page size from the first line
     first_line = output.split('\n')[0]
     page_size_match = re.search(r'page size of (\d+) bytes', first_line)
     if not page_size_match:
         return {}
-    
+
     page_size = int(page_size_match.group(1))
-    
+
     # Parse the rest of the output
     memory_stats = {}
-    
+
     # Define the patterns to extract from vm_stat
     patterns = {
         'free': r'Pages free:\s+(\d+)',
@@ -79,35 +79,35 @@ def parse_vm_stat():
         'compressed': r'Pages occupied by compressor:\s+(\d+)',
         'purgeable': r'Pages purgeable:\s+(\d+)',
     }
-    
+
     for key, pattern in patterns.items():
         match = re.search(pattern, output)
         if match:
             # Convert from page count to bytes
             pages = int(match.group(1).replace('.', ''))
             memory_stats[key] = pages * page_size
-    
+
     # Calculate additional metrics
     memory_stats['total'] = get_total_ram()
-    
+
     # Available = free + purgeable + inactive (potentially)
     memory_stats['available'] = memory_stats.get('free', 0) + memory_stats.get('purgeable', 0)
-    
+
     # Used = total - available
     memory_stats['used'] = memory_stats['total'] - memory_stats['available']
-    
+
     # Used percentage
     if memory_stats['total'] > 0:
         memory_stats['used_percent'] = (memory_stats['used'] / memory_stats['total']) * 100
     else:
         memory_stats['used_percent'] = 0
-    
+
     return memory_stats
 
 def get_process_memory():
     """Get memory usage per process."""
     output = get_command_output(["ps", "-eo", "pid,rss,vsz,user,comm"])
-    
+
     processes = []
     for line in output.strip().split('\n')[1:]:  # Skip header
         parts = line.split(None, 4)
@@ -123,18 +123,18 @@ def get_process_memory():
                 })
             except (ValueError, IndexError):
                 continue
-    
+
     return processes
 
 def group_processes_by_app(processes):
     """Group processes by application and sum their memory usage."""
     app_groups = defaultdict(lambda: {'count': 0, 'memory': 0, 'pids': []})
-    
+
     for process in processes:
         # Extract base app name from command
         command = process['command']
         app_name = os.path.basename(command)
-        
+
         # Normalize app names
         if 'chrome' in command.lower() or 'google chrome' in command.lower():
             app_name = 'Google Chrome'
@@ -160,12 +160,12 @@ def group_processes_by_app(processes):
             app_name = 'System (launchd)'
         elif 'windowserver' in command.lower():
             app_name = 'WindowServer'
-        
+
         # Add to the group
         app_groups[app_name]['count'] += 1
         app_groups[app_name]['memory'] += process['rss']
         app_groups[app_name]['pids'].append(process['pid'])
-    
+
     return app_groups
 
 def print_header(memory_stats):
@@ -173,15 +173,15 @@ def print_header(memory_stats):
     print(f"{Colors.BLUE}{'=' * 60}{Colors.RESET}")
     print(f"{Colors.BLUE}{Colors.BOLD}     MacOS RAM Usage Monitor     {Colors.RESET}")
     print(f"{Colors.BLUE}{'=' * 60}{Colors.RESET}")
-    
+
     total = format_bytes(memory_stats['total'])
     used = format_bytes(memory_stats['used'])
     available = format_bytes(memory_stats['available'])
-    
+
     print(f"{Colors.GREEN}Total RAM:{Colors.RESET} {total}")
     print(f"{Colors.GREEN}Used RAM:{Colors.RESET} {used} ({memory_stats['used_percent']:.2f}%)")
     print(f"{Colors.GREEN}Available RAM:{Colors.RESET} {available}")
-    
+
     # Memory pressure category
     if memory_stats['used_percent'] < 70:
         print(f"{Colors.GREEN}Memory Pressure: Low{Colors.RESET}")
@@ -189,14 +189,14 @@ def print_header(memory_stats):
         print(f"{Colors.YELLOW}Memory Pressure: Medium{Colors.RESET}")
     else:
         print(f"{Colors.RED}Memory Pressure: High{Colors.RESET}")
-    
+
     print(f"{Colors.BLUE}{'=' * 60}{Colors.RESET}")
     print()
 
 def print_memory_breakdown(memory_stats):
     """Print detailed memory breakdown."""
     print(f"{Colors.GREEN}Memory Breakdown:{Colors.RESET}")
-    
+
     categories = [
         ('active', "Active", "Apps currently in use"),
         ('wired', "Wired", "System/kernel memory"),
@@ -205,25 +205,25 @@ def print_memory_breakdown(memory_stats):
         ('free', "Free", "Immediately available"),
         ('purgeable', "Purgeable", "Can be reclaimed if needed")
     ]
-    
+
     for key, name, description in categories:
         if key in memory_stats:
             value = format_bytes(memory_stats[key])
             print(f"  {name}: {value} ({description})")
-    
+
     # Calculate unaccounted memory
     accounted = (
-        memory_stats.get('active', 0) + 
-        memory_stats.get('wired', 0) + 
-        memory_stats.get('inactive', 0) + 
-        memory_stats.get('compressed', 0) + 
+        memory_stats.get('active', 0) +
+        memory_stats.get('wired', 0) +
+        memory_stats.get('inactive', 0) +
+        memory_stats.get('compressed', 0) +
         memory_stats.get('free', 0)
     )
-    
+
     unaccounted = memory_stats['total'] - accounted
     if unaccounted > 0:
         print(f"  Unaccounted: {format_bytes(unaccounted)} (Memory used by GPU/file cache)")
-    
+
     print()
 
 def print_top_processes(processes, count=10):
@@ -231,14 +231,14 @@ def print_top_processes(processes, count=10):
     # Sort processes by RSS (Resident Set Size) in descending order
     sorted_processes = sorted(processes, key=lambda p: p['rss'], reverse=True)
     total_ram = get_total_ram()
-    
+
     print(f"{Colors.GREEN}Top {count} Processes by RAM Usage:{Colors.RESET}")
     print(f"{Colors.BLUE}{'PID':<8}{'MEM':<12}{'%MEM':<8}{'USER':<15}{'COMMAND'}{Colors.RESET}")
-    
+
     for proc in sorted_processes[:count]:
         mem = format_bytes(proc['rss'])
         mem_percent = (proc['rss'] / total_ram) * 100
-        
+
         # Color code based on memory percentage
         if mem_percent > 10:
             color = Colors.RED
@@ -246,26 +246,26 @@ def print_top_processes(processes, count=10):
             color = Colors.YELLOW
         else:
             color = ''
-        
+
         print(f"{color}{proc['pid']:<8}{mem:<12}{mem_percent:.1f}%{' ':<5}{proc['user']:<15}{proc['command']}{Colors.RESET}")
-    
+
     print()
 
 def print_app_groups(app_groups, total_ram):
     """Print processes grouped by application."""
     print(f"{Colors.GREEN}Memory Usage by Application Group:{Colors.RESET}")
     print(f"{Colors.BLUE}{'APPLICATION':<25}{'PROCESSES':<12}{'MEMORY':<15}{'%TOTAL'}{Colors.RESET}")
-    
+
     # Sort by memory usage
     sorted_apps = sorted(app_groups.items(), key=lambda x: x[1]['memory'], reverse=True)
-    
+
     total_shown_memory = 0
     for app_name, data in sorted_apps[:20]:  # Show top 20
         count = data['count']
         memory = data['memory']
         memory_percent = (memory / total_ram) * 100
         total_shown_memory += memory
-        
+
         # Color code based on memory percentage
         if memory_percent > 10:
             color = Colors.RED
@@ -273,9 +273,9 @@ def print_app_groups(app_groups, total_ram):
             color = Colors.YELLOW
         else:
             color = ''
-        
+
         print(f"{color}{app_name:<25}{count:<12}{format_bytes(memory):<15}{memory_percent:.1f}%{Colors.RESET}")
-    
+
     print(f"\n{Colors.YELLOW}Total Memory from Top Apps: {format_bytes(total_shown_memory)}{Colors.RESET}")
     print()
 
@@ -285,26 +285,26 @@ def main():
     if not memory_stats:
         print("Error: Could not get memory statistics")
         return 1
-    
+
     # Get process information
     processes = get_process_memory()
     if not processes:
         print("Error: Could not get process information")
         return 1
-    
+
     # Group processes by application
     app_groups = group_processes_by_app(processes)
-    
+
     # Print report
     print_header(memory_stats)
     print_memory_breakdown(memory_stats)
     print_top_processes(processes)
     print_app_groups(app_groups, memory_stats['total'])
-    
+
     # Print timestamp
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     print(f"{Colors.BLUE}Report generated: {now}{Colors.RESET}")
-    
+
     return 0
 
 if __name__ == "__main__":
