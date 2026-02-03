@@ -514,7 +514,11 @@ export GET_BASHED_HOME="$PREFIX"
 copy_tree() {
   local src="$1" dest="$2"
   mkdir -p "$dest"
-  rsync -a --delete "$src"/ "$dest"/
+  if [[ "${FORCE:-0}" -eq 1 ]]; then
+    rsync -a --delete "$src"/ "$dest"/
+  else
+    rsync -a "$src"/ "$dest"/
+  fi
 }
 
 # Copy base assets
@@ -629,7 +633,7 @@ run_install() {
       install_tool "$id"
     fi
   fi
-  unset INSTALL_IN_PROGRESS["$id"]
+  unset "INSTALL_IN_PROGRESS[$id]"
   mark_done "$id"
 }
 

@@ -90,8 +90,13 @@ def parse_vm_stat():
     # Calculate additional metrics
     memory_stats['total'] = get_total_ram()
 
-    # Available = free + purgeable + inactive (potentially)
-    memory_stats['available'] = memory_stats.get('free', 0) + memory_stats.get('purgeable', 0)
+    # Available = free + purgeable + inactive (+ speculative)
+    memory_stats['available'] = (
+        memory_stats.get('free', 0)
+        + memory_stats.get('purgeable', 0)
+        + memory_stats.get('inactive', 0)
+        + memory_stats.get('speculative', 0)
+    )
 
     # Used = total - available
     memory_stats['used'] = memory_stats['total'] - memory_stats['available']
@@ -237,7 +242,7 @@ def print_top_processes(processes, count=10):
 
     for proc in sorted_processes[:count]:
         mem = format_bytes(proc['rss'])
-        mem_percent = (proc['rss'] / total_ram) * 100
+        mem_percent = (proc['rss'] / total_ram) * 100 if total_ram else 0
 
         # Color code based on memory percentage
         if mem_percent > 10:
@@ -263,7 +268,7 @@ def print_app_groups(app_groups, total_ram):
     for app_name, data in sorted_apps[:20]:  # Show top 20
         count = data['count']
         memory = data['memory']
-        memory_percent = (memory / total_ram) * 100
+        memory_percent = (memory / total_ram) * 100 if total_ram else 0
         total_shown_memory += memory
 
         # Color code based on memory percentage

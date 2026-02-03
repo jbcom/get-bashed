@@ -22,6 +22,6 @@ ex () {
     *.zip)     unzip "$safe_f" ;;
     *.Z)       uncompress "$safe_f" ;;
     *.7z)      7z x "$safe_f" ;;
-    *)         echo "'$f' cannot be extracted via ex()" ;;
+    *)         echo "'$f' cannot be extracted via ex()" >&2; return 1 ;;
   esac
 }

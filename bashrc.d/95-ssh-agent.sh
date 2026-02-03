@@ -9,7 +9,7 @@ if [[ "${GET_BASHED_SSH_AGENT:-0}" == "1" ]] && [[ -t 1 ]]; then
   _ssh_agent_usable() {
     local sock="$1" rc
     [[ -S "$sock" ]] || return 1
-    SSH_AUTH_SOCK="$sock" SSH_AGENT_PID= ssh-add -l >/dev/null 2>&1
+    SSH_AUTH_SOCK="$sock" SSH_AGENT_PID="" ssh-add -l >/dev/null 2>&1
     rc=$?
     [[ $rc -eq 0 || $rc -eq 1 ]]
   }

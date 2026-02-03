@@ -377,7 +377,7 @@ install_asdf() {
 install_gnu_tools() {
   if _using_brew; then
     brew_exec install coreutils findutils gnu-sed gnu-tar
-    return 0
+    return $?
   fi
   echo "GNU tools install requires Homebrew." >&2
   return 1
@@ -509,7 +509,10 @@ install_vimrc() {
     return 0
   fi
   mkdir -p "$prefix/vendor"
-  git clone --depth=1 https://github.com/amix/vimrc.git "$target"
+  if ! git clone --depth=1 https://github.com/amix/vimrc.git "$target"; then
+    echo "Failed to clone vimrc repo." >&2
+    return 1
+  fi
   case "${GET_BASHED_VIMRC_MODE:-awesome}" in
     basic)
       sh "$target/install_basic_vimrc.sh"
@@ -573,8 +576,21 @@ PY
 
   url="https://github.com/rhysd/actionlint/releases/download/${tag}/actionlint_${version}_${os}_${arch}.tar.gz"
   tmp_dir="$(mktemp -d)"
-  curl -fsSL "$url" -o "$tmp_dir/actionlint.tgz"
-  tar -xzf "$tmp_dir/actionlint.tgz" -C "$tmp_dir"
+  if ! curl -fsSL "$url" -o "$tmp_dir/actionlint.tgz"; then
+    rm -rf "$tmp_dir"
+    echo "Failed to download actionlint from $url" >&2
+    return 1
+  fi
+  if [[ ! -s "$tmp_dir/actionlint.tgz" ]]; then
+    rm -rf "$tmp_dir"
+    echo "Downloaded actionlint archive is empty." >&2
+    return 1
+  fi
+  if ! tar -xzf "$tmp_dir/actionlint.tgz" -C "$tmp_dir"; then
+    rm -rf "$tmp_dir"
+    echo "Failed to extract actionlint archive." >&2
+    return 1
+  fi
   local prefix="${GET_BASHED_HOME:-$HOME/.get-bashed}"
   mkdir -p "$prefix/bin"
   mv "$tmp_dir/actionlint" "$prefix/bin/actionlint"
@@ -589,17 +605,26 @@ PY
 # @exitcode 0 If installed.
 # @exitcode 1 If no supported package manager.
 pkg_install() {
-  local brew_pkg="$1" apt_pkg="${2:-$1}" dnf_pkg="${3:-$1}" yum_pkg="${4:-$1}"
+  local brew_pkg="$1"
+  local apt_pkg="${2:-$1}"
+  local dnf_pkg="${3:-$1}"
+  local yum_pkg="${4:-$1}"
+  local pacman_pkg="${5:-$1}"
   if _using_brew; then
     brew_exec install "$brew_pkg"
+    return $?
   elif command -v apt-get >/dev/null 2>&1; then
     apt_install "$apt_pkg"
+    return $?
   elif command -v dnf >/dev/null 2>&1; then
     dnf_install "$dnf_pkg"
+    return $?
   elif command -v yum >/dev/null 2>&1; then
     yum_install "$yum_pkg"
+    return $?
   elif command -v pacman >/dev/null 2>&1; then
-    pacman_install "$brew_pkg"
+    pacman_install "$pacman_pkg"
+    return $?
   else
     echo "No supported package manager found for $brew_pkg" >&2
     return 1
