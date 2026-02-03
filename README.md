@@ -1,8 +1,10 @@
 # get-bashed
 
-[![CI](https://github.com/jbcom/get-bashed/actions/workflows/ci.yml/badge.svg)](https://github.com/jbcom/get-bashed/actions/workflows/ci.yml)
-[![Docs](https://github.com/jbcom/get-bashed/actions/workflows/docs.yml/badge.svg)](https://github.com/jbcom/get-bashed/actions/workflows/docs.yml)
-[![Release](https://github.com/jbcom/get-bashed/actions/workflows/release-please.yml/badge.svg)](https://github.com/jbcom/get-bashed/actions/workflows/release-please.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/jbcom/get-bashed/ci.yml?branch=main)](https://github.com/jbcom/get-bashed/actions/workflows/ci.yml)
+[![Docs](https://img.shields.io/github/actions/workflow/status/jbcom/get-bashed/docs.yml?branch=main)](https://github.com/jbcom/get-bashed/actions/workflows/docs.yml)
+[![Release](https://img.shields.io/github/v/release/jbcom/get-bashed?display_name=tag&sort=semver)](https://github.com/jbcom/get-bashed/releases)
+[![License](https://img.shields.io/github/license/jbcom/get-bashed)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/jbcom/get-bashed)](https://github.com/jbcom/get-bashed/stargazers)
 
 A modern, modular Bash environment you can install anywhere. get-bashed is designed to be readable, portable, and safe to extend, with a clean installer that supports interactive and non-interactive setups.
 

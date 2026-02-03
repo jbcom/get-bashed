@@ -1,31 +1,28 @@
 # Contributing
 
-Thanks for helping improve get-bashed.
+Thanks for helping improve get-bashed. This repo is intentionally shell-first, portable, and designed to be easy to reason about.
 
-## Architecture
+## Project Layout
 
-- `bashrc` / `bash_profile` are the entrypoints.
-- `bashrc.d/` is the ordered module system.
+- `bashrc` and `bash_profile` are the entrypoints.
+- `bashrc.d/` contains ordered runtime modules.
 - `install.sh` is the installer and config generator.
-- `installers/` contains dependency-aware installers.
-- `scripts/` holds CI and doc helpers.
+- `installers/` holds dependency-aware installers and helpers.
+- `scripts/` includes CI and doc helpers.
+- `tests/` contains Bats tests and helper libraries.
 
-## Development
+## Local Setup
 
 ```bash
 make docs
 make lint
+make test
 ```
 
 ## Pre-commit
 
-Install hooks:
 ```bash
 pre-commit install
-```
-
-Run all checks:
-```bash
 pre-commit run --all-files
 ```
 
@@ -44,17 +41,29 @@ bats tests
 
 ## CI
 
-CI uses `scripts/ci-setup.sh` to bootstrap tools into `GET_BASHED_HOME`.
+CI bootstraps tools into `GET_BASHED_HOME` via `scripts/ci-setup.sh`.
 
-## Guidelines
+## Style Guidelines
 
-- Keep scripts portable and dependency-light.
-- Avoid hardcoding user-specific paths.
-- Add shdoc annotations for new scripts.
+- Prefer POSIX shell in `install.sh` bootstrap and Bash elsewhere.
+- Keep modules idempotent and safe to source repeatedly.
+- Avoid hardcoding user paths. Use `$HOME` and `$GET_BASHED_HOME`.
+- Add shdoc annotations for public functions and new scripts.
+
+## Pull Requests
+
+- Keep PRs focused and small where possible.
+- Include a clear summary and testing notes.
+- Update docs when behavior changes.
+- Avoid adding unpinned dependencies or unverified downloads.
 
 ## Conventional Commits
 
-PR titles must follow Conventional Commits (e.g., `feat: add installer`).
+PR titles must follow Conventional Commits, for example `feat: add installer`.
+
+## Security
+
+Security-sensitive changes (installers, PATH, secrets) require extra scrutiny. See `SECURITY.md` for reporting guidance.
 
 ## Branch Protection
 
