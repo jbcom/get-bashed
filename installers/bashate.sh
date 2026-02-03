@@ -5,7 +5,7 @@
 #     Installer script for get-bashed.
 
 INSTALL_ID="bashate"
-INSTALL_DEPS=""
+INSTALL_DEPS="pipx"
 INSTALL_DESC="bashate"
 INSTALL_PLATFORMS="macos,linux,wsl"
 

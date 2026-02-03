@@ -1,4 +1,15 @@
-#!/usr/bin/env bash
+#!/bin/sh
+# POSIX shell bootstrap that re-execs with bash for full functionality.
+if [ -z "${GET_BASHED_BOOTSTRAPPED:-}" ]; then
+  if command -v bash >/dev/null 2>&1; then
+    GET_BASHED_BOOTSTRAPPED=1 exec bash "$0" "$@"
+  fi
+  echo "Bash is required to run this installer." >&2
+  echo "Install bash (recommended latest) and re-run: sh install.sh" >&2
+  exit 1
+fi
+
+# shellcheck shell=bash
 # @file install
 # @name get-bashed-installer
 # @brief Installer and configurator for get-bashed.
@@ -53,6 +64,11 @@ GET_BASHED_USE_DOPPLER=0
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --prefix)
+      if [[ $# -lt 2 ]]; then
+        echo "Error: --prefix requires a value" >&2
+        usage
+        exit 1
+      fi
       PREFIX="$2"; shift 2 ;;
     --force)
       FORCE=1; shift ;;
@@ -63,10 +79,25 @@ while [[ $# -gt 0 ]]; do
     --yes|-y)
       YES=1; shift ;;
     --profiles|-w)
+      if [[ $# -lt 2 ]]; then
+        echo "Error: --profiles requires a value" >&2
+        usage
+        exit 1
+      fi
       PROFILES="$2"; shift 2 ;;
     --features)
+      if [[ $# -lt 2 ]]; then
+        echo "Error: --features requires a value" >&2
+        usage
+        exit 1
+      fi
       FEATURES="$2"; shift 2 ;;
     --install|-i)
+      if [[ $# -lt 2 ]]; then
+        echo "Error: --install requires a value" >&2
+        usage
+        exit 1
+      fi
       INSTALLS="$2"; shift 2 ;;
     --list)
       LIST=1; shift ;;
@@ -135,8 +166,8 @@ apply_feature() {
     auto_tools) GET_BASHED_AUTO_TOOLS=$v ;;
     ssh_agent) GET_BASHED_SSH_AGENT=$v ;;
     doppler_env) GET_BASHED_USE_DOPPLER=$v ;;
-    dev_tools) GROUP_INSTALLS="${GROUP_INSTALLS},rg,fd,bat,fzf,jq,yq,tree,direnv,starship,nodejs,python" ;;
-    ops_tools) GROUP_INSTALLS="${GROUP_INSTALLS},gh,git_lfs,terraform,awscli,kubectl,helm,stern,doppler,nodejs,python,java" ;;
+    dev_tools) GROUP_INSTALLS="${GROUP_INSTALLS},rg,fd,bat,fzf,jq,yq,tree,direnv,starship,nodejs,python,bash" ;;
+    ops_tools) GROUP_INSTALLS="${GROUP_INSTALLS},gh,git_lfs,terraform,awscli,kubectl,helm,stern,doppler,nodejs,python,java,bash" ;;
     *) return 1 ;;
   esac
 }
@@ -146,6 +177,25 @@ apply_feature() {
 # @stdout Space-delimited items.
 split_csv() {
   local s="$1"; IFS=',' read -r -a _parts <<<"$s"; echo "${_parts[@]}";
+}
+
+# @internal
+is_valid_id() {
+  [[ "$1" =~ ^[a-z0-9_]+$ ]]
+}
+
+# @internal
+is_valid_profile() {
+  [[ "$1" =~ ^[a-z0-9_-]+$ ]]
+}
+
+# @internal
+installer_exists() {
+  local needle="$1" id
+  for id in $INSTALLERS; do
+    [[ "$id" == "$needle" ]] && return 0
+  done
+  return 1
 }
 
 # @internal
@@ -178,9 +228,16 @@ if [[ "$WITH_UI" -eq 1 ]] && [[ "$AUTO" -eq 0 ]]; then
   install_dialog || true
 fi
 
+# Load installer registry early for interactive UI.
+load_installers
+
 # Apply profiles first
 if [[ -n "$PROFILES" ]]; then
   for p in $(split_csv "$PROFILES"); do
+    if ! is_valid_profile "$p"; then
+      echo "Invalid profile name: $p" >&2
+      exit 1
+    fi
     # Load profile file if present
     PROFILE_FILE="$REPO_DIR/profiles/${p}.env"
     if [[ -r "$PROFILE_FILE" ]]; then
@@ -307,6 +364,16 @@ if [[ -n "$INSTALLS" ]]; then
   INSTALLS="$(echo "$INSTALLS" | tr ',' '\n' | awk 'NF && !seen[$0]++' | paste -sd, -)"
 fi
 
+# Validate installer ids (after dedupe)
+if [[ -n "$INSTALLS" ]]; then
+  for id in $(split_csv "$INSTALLS"); do
+    if ! installer_exists "$id"; then
+      echo "Unknown installer: $id" >&2
+      exit 1
+    fi
+  done
+fi
+
 # Installer registry
 INSTALLERS=""
 # @internal
@@ -318,34 +385,44 @@ load_installers() {
     [[ "$f" == "$REPO_DIR/installers/_helpers.sh" ]] && continue
     # shellcheck disable=SC1090
     source "$f"
+    if ! is_valid_id "$INSTALL_ID"; then
+      echo "Invalid installer id: $INSTALL_ID (from $f)" >&2
+      exit 1
+    fi
     INSTALLERS="$INSTALLERS $INSTALL_ID"
-    eval "INSTALL_DEPS_${INSTALL_ID}=\"${INSTALL_DEPS}\""
-    eval "INSTALL_DESC_${INSTALL_ID}=\"${INSTALL_DESC:-}\""
-    eval "INSTALL_PLATFORMS_${INSTALL_ID}=\"${INSTALL_PLATFORMS:-}\""
+    printf -v "INSTALL_DEPS_${INSTALL_ID}" "%s" "${INSTALL_DEPS}"
+    printf -v "INSTALL_DESC_${INSTALL_ID}" "%s" "${INSTALL_DESC:-}"
+    printf -v "INSTALL_PLATFORMS_${INSTALL_ID}" "%s" "${INSTALL_PLATFORMS:-}"
   done
 }
 
 # @internal
 get_deps() {
   local id="$1"
-  eval "echo \"\${INSTALL_DEPS_${id}:-}\""
+  local var="INSTALL_DEPS_${id}"
+  echo "${!var:-}"
 }
 
 # @internal
 is_done() {
   local id="$1"
-  eval "[[ \"\${INSTALLED_${id}:-0}\" == 1 ]]"
+  local var="INSTALLED_${id}"
+  [[ "${!var:-0}" == 1 ]]
 }
 
 # @internal
 mark_done() {
   local id="$1"
-  eval "INSTALLED_${id}=1"
+  printf -v "INSTALLED_${id}" "%s" 1
 }
 
 # @internal
 run_install() {
   local id="$1" dep
+  if ! is_valid_id "$id"; then
+    echo "Invalid installer id: $id" >&2
+    return 1
+  fi
   if is_done "$id"; then
     return 0
   fi
@@ -364,8 +441,6 @@ run_install() {
   fi
   mark_done "$id"
 }
-
-load_installers
 
 if [[ "$LIST_FEATURES" -eq 1 ]]; then
   echo "Features:"

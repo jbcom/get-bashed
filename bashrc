@@ -3,6 +3,10 @@
 # @description
 #     Loads modular runtime files in order.
 
+# Include guard to prevent multiple sourcing
+[[ -n "${GET_BASHED_SOURCED:-}" ]] && return
+GET_BASHED_SOURCED=1
+
 # Return early if not interactive
 [[ $- != *i* ]] && return
 

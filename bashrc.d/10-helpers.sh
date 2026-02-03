@@ -12,7 +12,6 @@ _path_dedupe() {
 
 declare -f path_add >/dev/null 2>&1 || path_add() {
   _path_add_front "$@"
-  PATH="$(_path_dedupe)"
 }
 
 _maybe_source() { [[ -r "$1" ]] && source "$1"; }

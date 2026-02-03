@@ -37,25 +37,18 @@ install_shdoc() {
   mkdir -p "$bindir"
 
   # shdoc requires bash 4+ for ;;& case labels
-  local bash_bin
-  bash_bin="$(command -v bash)"
   local bash_major
-  bash_major="$("$bash_bin" -c 'echo ${BASH_VERSINFO[0]:-0}' 2>/dev/null || echo 0)"
+  bash_major="$(bash -c 'echo ${BASH_VERSINFO[0]:-0}' 2>/dev/null || echo 0)"
   if [[ "$bash_major" -lt 4 ]] && _using_brew; then
     brew install bash || true
-    if [[ -x "/opt/homebrew/bin/bash" ]]; then
-      bash_bin="/opt/homebrew/bin/bash"
-    elif [[ -x "/usr/local/bin/bash" ]]; then
-      bash_bin="/usr/local/bin/bash"
-    fi
   fi
 
   tmp_dir="$(mktemp -d)"
   git clone --recursive https://github.com/reconquest/shdoc "$tmp_dir/shdoc"
-  "$bash_bin" -lc "cd \"$tmp_dir/shdoc\" && make install PREFIX=\"$prefix\" BINDIR=\"$bindir\"" || {
+  if ! make -C "$tmp_dir/shdoc" install PREFIX="$prefix" BINDIR="$bindir"; then
     echo "Failed to install shdoc locally. See https://github.com/reconquest/shdoc" >&2
     rm -rf "$tmp_dir"
     return 1
-  }
+  fi
   rm -rf "$tmp_dir"
 }

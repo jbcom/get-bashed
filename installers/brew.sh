@@ -16,10 +16,15 @@ install_brew() {
     return 0
   fi
 
-  if _using_curl; then
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-  else
+  if ! _using_curl; then
     echo "curl is required to install Homebrew." >&2
     return 1
   fi
+
+  local tmp_dir
+  tmp_dir="$(mktemp -d)"
+  curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh -o "$tmp_dir/install.sh"
+  echo "Running Homebrew installer from $tmp_dir/install.sh"
+  /bin/bash "$tmp_dir/install.sh"
+  rm -rf "$tmp_dir"
 }

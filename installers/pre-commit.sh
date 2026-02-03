@@ -5,7 +5,7 @@
 #     Installer script for get-bashed.
 
 INSTALL_ID="pre_commit"
-INSTALL_DEPS=""
+INSTALL_DEPS="pipx"
 INSTALL_DESC="pre-commit"
 INSTALL_PLATFORMS="macos,linux,wsl"
 

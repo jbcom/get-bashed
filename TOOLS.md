@@ -2,6 +2,13 @@
 
 This project favors **asdf** for multi-version language management and keeps shell behavior deterministic.
 
+## Bash
+
+It is recommended to install the latest GNU Bash for full compatibility:
+```bash
+./install.sh --install bash
+```
+
 ## asdf
 
 - Recommended for: Node.js, Python, Java, and other multi-version runtimes.
@@ -10,8 +17,8 @@ This project favors **asdf** for multi-version language management and keeps she
 Example:
 ```bash
 asdf plugin add nodejs
-asdf install nodejs 22.22.0
-asdf set --home nodejs 22.22.0
+asdf install nodejs lts
+asdf set --home nodejs lts
 ```
 
 ## Build Flags (macOS)

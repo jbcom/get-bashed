@@ -9,5 +9,7 @@ if command -v asdf >/dev/null 2>&1; then
     . "$HOME/.asdf/asdf.sh"
   elif [[ -r "/opt/homebrew/opt/asdf/libexec/asdf.sh" ]]; then
     . "/opt/homebrew/opt/asdf/libexec/asdf.sh"
+  elif [[ -r "/usr/local/opt/asdf/libexec/asdf.sh" ]]; then
+    . "/usr/local/opt/asdf/libexec/asdf.sh"
   fi
 fi

@@ -11,6 +11,7 @@ Installer script for get-bashed.
 * [install_actionlint](#installactionlint)
 * [install_asdf](#installasdf)
 * [install_awscli](#installawscli)
+* [install_bash](#installbash)
 * [install_bashate](#installbashate)
 * [install_bat](#installbat)
 * [install_bats](#installbats)
@@ -31,6 +32,7 @@ Installer script for get-bashed.
 * [install_jq](#installjq)
 * [install_kubectl](#installkubectl)
 * [install_nodejs](#installnodejs)
+* [install_pipx](#installpipx)
 * [install_pre_commit](#installprecommit)
 * [install_python](#installpython)
 * [install_rg](#installrg)
@@ -56,6 +58,12 @@ Run installer.
 _Function has no arguments._
 
 ### install_awscli
+
+Run installer.
+
+_Function has no arguments._
+
+### install_bash
 
 Run installer.
 
@@ -176,6 +184,12 @@ Run installer.
 _Function has no arguments._
 
 ### install_nodejs
+
+Run installer.
+
+_Function has no arguments._
+
+### install_pipx
 
 Run installer.
 

@@ -17,7 +17,9 @@ A modern, modular Bash environment you can install anywhere. get-bashed is desig
 ## Quick Start
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/jbdevprimary/get-bashed/main/install.sh | bash
+curl -fsSL -o install.sh https://raw.githubusercontent.com/jbdevprimary/get-bashed/main/install.sh
+# Review install.sh before running
+sh install.sh
 ```
 
 ## Learn More
@@ -43,7 +45,7 @@ Available installers (comma list):
 - `rg`, `fd`, `bat`, `fzf`, `jq`, `yq`, `tree`
 - `gh`, `git_lfs`, `terraform`, `awscli`, `kubectl`, `helm`, `stern`
 - `nodejs`, `python`, `java`
-- `pre_commit`, `bashate`, `shellcheck`, `actionlint`, `bats`, `shdoc`
+- `pipx`, `pre_commit`, `bashate`, `shellcheck`, `actionlint`, `bats`, `shdoc`, `bash`
 
 ## Support
 
