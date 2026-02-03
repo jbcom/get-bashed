@@ -46,6 +46,8 @@ Available installers (comma list):
 - `gh`, `git_lfs`, `terraform`, `awscli`, `kubectl`, `helm`, `stern`
 - `nodejs`, `python`, `java`
 - `pipx`, `pre_commit`, `bashate`, `shellcheck`, `actionlint`, `bats`, `shdoc`, `bash`
+- `bash_it` (bash-it framework)
+- `vimrc` (amix/vimrc)
 
 ## Support
 

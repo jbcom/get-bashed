@@ -11,6 +11,7 @@ Installer script for get-bashed.
 * [install_actionlint](#installactionlint)
 * [install_asdf](#installasdf)
 * [install_awscli](#installawscli)
+* [install_bash_it](#installbashit)
 * [install_bash](#installbash)
 * [install_bashate](#installbashate)
 * [install_bat](#installbat)
@@ -42,6 +43,7 @@ Installer script for get-bashed.
 * [install_stern](#installstern)
 * [install_terraform](#installterraform)
 * [install_tree](#installtree)
+* [install_vimrc](#installvimrc)
 * [install_wget](#installwget)
 * [install_yq](#installyq)
 
@@ -58,6 +60,12 @@ Run installer.
 _Function has no arguments._
 
 ### install_awscli
+
+Run installer.
+
+_Function has no arguments._
+
+### install_bash_it
 
 Run installer.
 
@@ -244,6 +252,12 @@ Run installer.
 _Function has no arguments._
 
 ### install_tree
+
+Run installer.
+
+_Function has no arguments._
+
+### install_vimrc
 
 Run installer.
 

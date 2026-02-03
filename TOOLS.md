@@ -52,6 +52,21 @@ This adds `coreutils`, `findutils`, `gnu-sed`, and `gnu-tar` gnubin paths ahead 
 - `@google/gemini-cli`
 - `@sonar/scan`
 
+## bash-it
+
+Install bash-it and enable it:
+```bash
+./install.sh --install bash_it
+./install.sh --features bash_it
+```
+
+## Vim (amix/vimrc)
+
+Install the Awesome vimrc:
+```bash
+./install.sh --install vimrc
+```
+
 ## Doppler (Optional)
 
 If you use Doppler for secrets, install the CLI and enable:
@@ -102,6 +117,7 @@ Use `--features` with comma-separated values:
 - `auto_tools`
 - `ssh_agent`
 - `doppler_env`
+- `bash_it`
 - `dev_tools`
 - `ops_tools`
 
