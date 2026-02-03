@@ -200,6 +200,74 @@ installer_exists() {
   return 1
 }
 
+# Installer registry
+INSTALLERS=""
+# @internal
+load_installers() {
+  local f
+  # shellcheck disable=SC1090
+  source "$REPO_DIR/installers/_helpers.sh"
+  for f in "$REPO_DIR/installers"/*.sh; do
+    [[ "$f" == "$REPO_DIR/installers/_helpers.sh" ]] && continue
+    # shellcheck disable=SC1090
+    source "$f"
+    if ! is_valid_id "$INSTALL_ID"; then
+      echo "Invalid installer id: $INSTALL_ID (from $f)" >&2
+      exit 1
+    fi
+    INSTALLERS="$INSTALLERS $INSTALL_ID"
+    printf -v "INSTALL_DEPS_${INSTALL_ID}" "%s" "${INSTALL_DEPS}"
+    printf -v "INSTALL_DESC_${INSTALL_ID}" "%s" "${INSTALL_DESC:-}"
+    printf -v "INSTALL_PLATFORMS_${INSTALL_ID}" "%s" "${INSTALL_PLATFORMS:-}"
+  done
+}
+
+# @internal
+get_deps() {
+  local id="$1"
+  local var="INSTALL_DEPS_${id}"
+  echo "${!var:-}"
+}
+
+# @internal
+is_done() {
+  local id="$1"
+  local var="INSTALLED_${id}"
+  [[ "${!var:-0}" == 1 ]]
+}
+
+# @internal
+mark_done() {
+  local id="$1"
+  printf -v "INSTALLED_${id}" "%s" 1
+}
+
+# @internal
+run_install() {
+  local id="$1" dep
+  if ! is_valid_id "$id"; then
+    echo "Invalid installer id: $id" >&2
+    return 1
+  fi
+  if is_done "$id"; then
+    return 0
+  fi
+  for dep in $(get_deps "$id"); do
+    run_install "$dep"
+  done
+  if [[ "$DRY_RUN" -eq 1 ]]; then
+    echo "would install: $id"
+  else
+    if declare -f "install_${id}" >/dev/null 2>&1; then
+      "install_${id}"
+    else
+      echo "Installer not found: $id" >&2
+      return 1
+    fi
+  fi
+  mark_done "$id"
+}
+
 # @internal
 install_dialog() {
   if command -v dialog >/dev/null 2>&1; then
@@ -378,74 +446,6 @@ if [[ -n "$INSTALLS" ]]; then
     fi
   done
 fi
-
-# Installer registry
-INSTALLERS=""
-# @internal
-load_installers() {
-  local f
-  # shellcheck disable=SC1090
-  source "$REPO_DIR/installers/_helpers.sh"
-  for f in "$REPO_DIR/installers"/*.sh; do
-    [[ "$f" == "$REPO_DIR/installers/_helpers.sh" ]] && continue
-    # shellcheck disable=SC1090
-    source "$f"
-    if ! is_valid_id "$INSTALL_ID"; then
-      echo "Invalid installer id: $INSTALL_ID (from $f)" >&2
-      exit 1
-    fi
-    INSTALLERS="$INSTALLERS $INSTALL_ID"
-    printf -v "INSTALL_DEPS_${INSTALL_ID}" "%s" "${INSTALL_DEPS}"
-    printf -v "INSTALL_DESC_${INSTALL_ID}" "%s" "${INSTALL_DESC:-}"
-    printf -v "INSTALL_PLATFORMS_${INSTALL_ID}" "%s" "${INSTALL_PLATFORMS:-}"
-  done
-}
-
-# @internal
-get_deps() {
-  local id="$1"
-  local var="INSTALL_DEPS_${id}"
-  echo "${!var:-}"
-}
-
-# @internal
-is_done() {
-  local id="$1"
-  local var="INSTALLED_${id}"
-  [[ "${!var:-0}" == 1 ]]
-}
-
-# @internal
-mark_done() {
-  local id="$1"
-  printf -v "INSTALLED_${id}" "%s" 1
-}
-
-# @internal
-run_install() {
-  local id="$1" dep
-  if ! is_valid_id "$id"; then
-    echo "Invalid installer id: $id" >&2
-    return 1
-  fi
-  if is_done "$id"; then
-    return 0
-  fi
-  for dep in $(get_deps "$id"); do
-    run_install "$dep"
-  done
-  if [[ "$DRY_RUN" -eq 1 ]]; then
-    echo "would install: $id"
-  else
-    if declare -f "install_${id}" >/dev/null 2>&1; then
-      "install_${id}"
-    else
-      echo "Installer not found: $id" >&2
-      return 1
-    fi
-  fi
-  mark_done "$id"
-}
 
 if [[ "$LIST_FEATURES" -eq 1 ]]; then
   echo "Features:"
