@@ -20,6 +20,7 @@ declare -A TOOL_CURL_URL
 declare -A TOOL_CURL_CMD
 declare -A TOOL_HANDLER
 declare -A TOOL_OPT_DEPS
+declare -A TOOL_BIN
 
 tool_register() {
   local id="$1" desc="$2" deps="$3" platforms="$4" methods="$5"
@@ -59,9 +60,25 @@ tool_opt_deps() {
   local id="$1" spec="$2"
   TOOL_OPT_DEPS["$id"]="$spec"
 }
+
+tool_bin() {
+  local id="$1" bin="$2"
+  TOOL_BIN["$id"]="$bin"
+}
+
+# @internal
+load_installers() {
+  INSTALLERS=""
+  for id in "${TOOL_IDS[@]}"; do
+    INSTALLERS="${INSTALLERS}${id} "
+    local desc="${TOOL_DESC[$id]:-$id}"
+    printf -v "INSTALL_DESC_${id}" "%s" "$desc"
+  done
+}
 # Core tools
 tool_register brew "Homebrew/Linuxbrew installer" "" "macos,linux,wsl" "curl"
 tool_curl brew "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh" "/bin/bash"
+tool_bin brew "brew"
 
 tool_register asdf "asdf version manager" "" "macos,linux,wsl" "handler"
 tool_handler asdf "install_asdf"
@@ -124,6 +141,7 @@ tool_pkgs direnv "direnv" "direnv" "" "" ""
 
 tool_register starship "starship" "" "macos,linux,wsl" "brew"
 tool_pkgs starship "starship" "" "" "" ""
+tool_bin starship "starship"
 
 tool_register rg "ripgrep" "" "macos,linux,wsl" "brew,apt,dnf,yum,pacman"
 tool_pkgs rg "ripgrep" "ripgrep" "ripgrep" "ripgrep" "ripgrep"

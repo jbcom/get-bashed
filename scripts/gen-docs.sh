@@ -13,7 +13,7 @@ command -v shdoc >/dev/null 2>&1 || {
   exit 1
 }
 
-shdoc < "$ROOT_DIR/install.sh" > "$ROOT_DIR/docs/INSTALLER.md"
+shdoc < "$ROOT_DIR/install.bash" > "$ROOT_DIR/docs/INSTALLER.md"
 shdoc < "$ROOT_DIR/installers/_helpers.sh" > "$ROOT_DIR/docs/INSTALLERS_HELPERS.md"
 shdoc < "$ROOT_DIR/installers/tools.sh" > "$ROOT_DIR/docs/INSTALLERS.md"
 

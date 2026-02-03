@@ -10,7 +10,31 @@
 _using_asdf() { command -v asdf >/dev/null 2>&1; }
 
 # @internal
-_using_brew() { command -v brew >/dev/null 2>&1; }
+_brew_bin() {
+  if command -v brew >/dev/null 2>&1; then
+    command -v brew
+    return 0
+  fi
+  if [[ -x "/opt/homebrew/bin/brew" ]]; then
+    echo "/opt/homebrew/bin/brew"
+    return 0
+  fi
+  if [[ -x "/usr/local/bin/brew" ]]; then
+    echo "/usr/local/bin/brew"
+    return 0
+  fi
+  return 1
+}
+
+# @internal
+_using_brew() { _brew_bin >/dev/null 2>&1; }
+
+# @internal
+brew_exec() {
+  local brew_bin
+  brew_bin="$(_brew_bin)" || return 1
+  "$brew_bin" "$@"
+}
 
 # @internal
 _using_git() { command -v git >/dev/null 2>&1; }
@@ -170,7 +194,7 @@ component_install() {
   fi
 
   if _using_brew; then
-    if brew install "$term"; then
+    if brew_exec install "$term"; then
       return 0
     fi
   fi
@@ -240,6 +264,11 @@ install_tool() {
     return $?
   fi
 
+  local bin="${TOOL_BIN[$id]:-}"
+  if [[ -n "$bin" ]] && command -v "$bin" >/dev/null 2>&1; then
+    return 0
+  fi
+
   local methods="${TOOL_METHODS[$id]:-}"
   if [[ -z "$methods" ]]; then
     echo "No install methods defined for $id" >&2
@@ -252,7 +281,7 @@ install_tool() {
     case "$method" in
       brew)
         _using_brew || continue
-        brew install "${TOOL_BREW[$id]:-$id}" && return 0
+        brew_exec install "${TOOL_BREW[$id]:-$id}" && return 0
         ;;
       apt)
         command -v apt-get >/dev/null 2>&1 || continue
@@ -323,7 +352,7 @@ install_asdf() {
   fi
 
   if _using_brew; then
-    brew install asdf
+    brew_exec install asdf
     return 0
   fi
 
@@ -347,7 +376,7 @@ install_asdf() {
 # @description Install GNU tools (handler).
 install_gnu_tools() {
   if _using_brew; then
-    brew install coreutils findutils gnu-sed gnu-tar
+    brew_exec install coreutils findutils gnu-sed gnu-tar
     return 0
   fi
   echo "GNU tools install requires Homebrew." >&2
@@ -458,7 +487,7 @@ install_shdoc() {
   local bash_major
   bash_major="$(bash -c 'echo ${BASH_VERSINFO[0]:-0}' 2>/dev/null || echo 0)"
   if [[ "$bash_major" -lt 4 ]] && _using_brew; then
-    brew install bash || true
+    brew_exec install bash || true
   fi
 
   local tmp_dir
@@ -498,7 +527,7 @@ install_actionlint() {
   fi
 
   if _using_brew; then
-    brew install actionlint && return 0
+    brew_exec install actionlint && return 0
   fi
   if command -v apt-get >/dev/null 2>&1; then
     if apt_install actionlint; then
@@ -562,7 +591,7 @@ PY
 pkg_install() {
   local brew_pkg="$1" apt_pkg="${2:-$1}" dnf_pkg="${3:-$1}" yum_pkg="${4:-$1}"
   if _using_brew; then
-    brew install "$brew_pkg"
+    brew_exec install "$brew_pkg"
   elif command -v apt-get >/dev/null 2>&1; then
     apt_install "$apt_pkg"
   elif command -v dnf >/dev/null 2>&1; then
