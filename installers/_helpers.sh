@@ -273,6 +273,9 @@ install_tool() {
         [[ -n "$url" ]] || continue
         local prefix="${GET_BASHED_HOME:-$HOME/.get-bashed}"
         local target="$prefix/vendor/$id"
+        if [[ -d "$target/.git" ]]; then
+          return 0
+        fi
         mkdir -p "$prefix/vendor"
         git clone --depth=1 "$url" "$target"
         return 0

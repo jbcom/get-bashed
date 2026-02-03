@@ -30,6 +30,7 @@ Usage: install.sh [--prefix PATH] [--force] [--with-ui]
                   [--features gnu_over_bsd,build_flags,...]
                   [--install brew,asdf,doppler,...]
                   [--vimrc-mode awesome|basic]
+                  [--link-dotfiles]
                   [--list] [--list-profiles] [--list-features] [--list-installers]
                   [--dry-run]
 
@@ -58,6 +59,7 @@ LIST_FEATURES=0
 LIST_INSTALLERS=0
 GROUP_INSTALLS=""
 VIMRC_MODE="awesome"
+LINK_DOTFILES=0
 
 # Feature flags (defaults)
 GET_BASHED_GNU=0
@@ -112,6 +114,8 @@ while [[ $# -gt 0 ]]; do
         exit 1
       fi
       VIMRC_MODE="$2"; shift 2 ;;
+    --link-dotfiles)
+      LINK_DOTFILES=1; shift ;;
     --list)
       LIST=1; shift ;;
     --list-profiles)
@@ -552,6 +556,7 @@ export GET_BASHED_SSH_AGENT=${GET_BASHED_SSH_AGENT}
 export GET_BASHED_USE_DOPPLER=${GET_BASHED_USE_DOPPLER}
 export GET_BASHED_USE_BASH_IT=${GET_BASHED_USE_BASH_IT}
 export GET_BASHED_VIMRC_MODE=${VIMRC_MODE}
+export GET_BASHED_LINK_DOTFILES=${LINK_DOTFILES}
 __CFG__
 
 # @internal
@@ -570,7 +575,35 @@ BASHRC_SNIP='if [[ -r "$HOME/.get-bashed/bashrc" ]]; then source "$HOME/.get-bas
 BASH_PROFILE_LINE="# get-bashed: source login bash_profile"
 BASH_PROFILE_SNIP='if [[ -r "$HOME/.get-bashed/bash_profile" ]]; then source "$HOME/.get-bashed/bash_profile"; fi'
 
-ensure_block "$HOME/.bashrc" "$BASHRC_LINE" "$BASHRC_SNIP"
-ensure_block "$HOME/.bash_profile" "$BASH_PROFILE_LINE" "$BASH_PROFILE_SNIP"
+if [[ "$LINK_DOTFILES" -ne 1 ]]; then
+  ensure_block "$HOME/.bashrc" "$BASHRC_LINE" "$BASHRC_SNIP"
+  ensure_block "$HOME/.bash_profile" "$BASH_PROFILE_LINE" "$BASH_PROFILE_SNIP"
+fi
+
+link_dotfile() {
+  local name="$1"
+  local src="$PREFIX/$name"
+  local dst="$HOME/.${name}"
+  if [[ ! -e "$src" ]]; then
+    return 0
+  fi
+  if [[ -L "$dst" ]] && [[ "$(readlink "$dst")" == "$src" ]]; then
+    return 0
+  fi
+  if [[ -e "$dst" || -L "$dst" ]]; then
+    local backup_dir="$PREFIX/backup"
+    local stamp
+    stamp="$(date +%Y%m%d%H%M%S)"
+    mkdir -p "$backup_dir"
+    mv "$dst" "$backup_dir/${name}.${stamp}"
+  fi
+  ln -s "$src" "$dst"
+}
+
+if [[ "$LINK_DOTFILES" -eq 1 ]]; then
+  link_dotfile "bashrc"
+  link_dotfile "bash_profile"
+  link_dotfile "inputrc"
+fi
 
 echo "Installed get-bashed to $PREFIX"

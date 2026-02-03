@@ -22,6 +22,11 @@ curl -fsSL -o install.sh https://raw.githubusercontent.com/jbcom/get-bashed/main
 sh install.sh
 ```
 
+To fully manage shell dotfiles (backup + symlink into `~/.get-bashed`):
+```bash
+sh install.sh --link-dotfiles
+```
+
 ## Learn More
 
 Docs: `https://jonbogaty.com/get-bashed`
