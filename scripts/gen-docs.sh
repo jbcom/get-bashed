@@ -15,19 +15,7 @@ command -v shdoc >/dev/null 2>&1 || {
 
 shdoc < "$ROOT_DIR/install.sh" > "$ROOT_DIR/docs/INSTALLER.md"
 shdoc < "$ROOT_DIR/installers/_helpers.sh" > "$ROOT_DIR/docs/INSTALLERS_HELPERS.md"
-
-# Combine all installers into one doc
-TMP_FILE="$(mktemp)"
-for f in "$ROOT_DIR/installers"/*.sh; do
-  [[ "$f" == "$ROOT_DIR/installers/_helpers.sh" ]] && continue
-  echo "" >> "$TMP_FILE"
-  cat "$f" >> "$TMP_FILE"
-  echo "" >> "$TMP_FILE"
-  echo "# ----" >> "$TMP_FILE"
-  echo "" >> "$TMP_FILE"
- done
-shdoc < "$TMP_FILE" > "$ROOT_DIR/docs/INSTALLERS.md"
-rm -f "$TMP_FILE"
+shdoc < "$ROOT_DIR/installers/tools.sh" > "$ROOT_DIR/docs/INSTALLERS.md"
 
 # Combine all runtime modules
 TMP_MODULES="$(mktemp)"

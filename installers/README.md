@@ -1,11 +1,10 @@
 # installers
 
-Each installer is a Bash script that declares:
+Installers are defined in `installers/tools.sh` as a registry.
 
-- `INSTALL_ID`: unique id
-- `INSTALL_DEPS`: space-delimited list of other installers
-- `INSTALL_DESC`: short description
-- `INSTALL_PLATFORMS`: supported platforms
-- `install_<id>()`: function that performs installation
+Each tool declares:
+- ID, description, deps, platforms
+- supported install methods (brew/apt/dnf/yum/pacman/pipx/git/curl/handler)
+- optional package name overrides
 
-The main installer resolves dependencies and executes installers idempotently.
+Handlers live in `installers/_helpers.sh` for tools that need custom logic.

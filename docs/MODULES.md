@@ -11,6 +11,7 @@ Runtime module loaded by get-bashed in lexicographic order.
 * [_path_add_front](#pathaddfront)
 * [install_cli_tools](#installclitools)
 * [doppler_shell](#dopplershell)
+* [get_bashed_component](#getbashedcomponent)
 * [ex](#ex)
 
 ### _path_add_front
@@ -28,6 +29,10 @@ Runtime module loaded by get-bashed in lexicographic order.
 ```bash
 doppler_shell
 ```
+
+### get_bashed_component
+
+Optional bash-it integration.
 
 ### ex
 
