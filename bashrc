@@ -17,6 +17,10 @@ if [[ -r "$GET_BASHED_HOME/get-bashedrc.sh" ]]; then
   source "$GET_BASHED_HOME/get-bashedrc.sh"
 fi
 
+if [[ -r "$GET_BASHED_HOME/bash_aliases" ]]; then
+  source "$GET_BASHED_HOME/bash_aliases"
+fi
+
 for f in "$GET_BASHED_RC_DIR"/[0-9][0-9]-*.sh; do
   [[ -r "$f" ]] && source "$f"
 done

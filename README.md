@@ -26,6 +26,8 @@ To fully manage shell dotfiles (backup + symlink into `~/.get-bashed`):
 ```bash
 sh install.sh --link-dotfiles
 ```
+This will link `bashrc`, `bash_profile`, `inputrc`, `bash_aliases`, `vimrc`,
+and `gitconfig` to the versions under `~/.get-bashed`.
 
 ## Learn More
 

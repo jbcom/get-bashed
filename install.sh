@@ -604,6 +604,9 @@ if [[ "$LINK_DOTFILES" -eq 1 ]]; then
   link_dotfile "bashrc"
   link_dotfile "bash_profile"
   link_dotfile "inputrc"
+  link_dotfile "bash_aliases"
+  link_dotfile "vimrc"
+  link_dotfile "gitconfig"
 fi
 
 echo "Installed get-bashed to $PREFIX"
