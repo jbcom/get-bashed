@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# @file get_bashed_component
+# @brief Enable/disable bash-it components via search.
+# @description
+#     Wrapper for bash-it search enable/disable.
+
+set -euo pipefail
+
+usage() {
+  cat <<'USAGE'
+Usage: get_bashed_component [enable|disable] term1 [term2 ...]
+
+Examples:
+  get_bashed_component enable git docker
+  get_bashed_component disable ruby -chruby
+USAGE
+}
+
+action="${1:-}"
+shift || true
+
+case "$action" in
+  enable|disable) ;;
+  *)
+    usage
+    exit 1
+    ;;
+esac
+
+if [[ $# -eq 0 ]]; then
+  usage
+  exit 1
+fi
+
+GET_BASHED_HOME="${GET_BASHED_HOME:-$HOME/.get-bashed}"
+BASH_IT="$GET_BASHED_HOME/vendor/bash-it"
+if [[ -r "$BASH_IT/bash_it.sh" ]]; then
+  # shellcheck disable=SC1090
+  source "$BASH_IT/bash_it.sh"
+else
+  echo "bash-it not found at $BASH_IT. Install with: ./install.sh --install bash_it" >&2
+  exit 1
+fi
+
+NO_COLOR=1 bash-it search "$@" "--${action}"

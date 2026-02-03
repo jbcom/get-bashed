@@ -60,6 +60,11 @@ Install bash-it and enable it:
 ./install.sh --features bash_it
 ```
 
+Enable components via search:
+```bash
+get_bashed_component enable git docker
+```
+
 ## Vim (amix/vimrc)
 
 Install the Awesome vimrc:
