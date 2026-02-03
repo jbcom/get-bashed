@@ -1,14 +1,15 @@
 # Active Context
 
-- Focus: finalize repo hardening, docs, CI/CD, and initial release PR.
+- Focus: stabilize installer registry, idempotent dotfile linking, and CI.
 - Recent changes:
-  - installer refactor (profiles/features/installers, list/dry-run)
-  - shdoc pipeline + docs generation
-  - CI setup with get-bashed bootstrapping
-  - actions pinned to latest stable SHAs
-  - dependabot config + auto-merge workflow
-  - PR title conventional commit enforcement
+  - centralized tool registry in `installers/tools.sh`
+  - unified install handlers in `installers/_helpers.sh`
+  - optional dependencies keyed off config (e.g. git_signing -> gnupg)
+  - added dotfile linking (`--link-dotfiles`) with backups
+  - added default dotfiles (inputrc, vimrc, gitconfig, bash_aliases)
+  - added `--name/--email` prompts + config wiring
+  - added tests for dotfile linking and config output
 - Next steps:
-  - regenerate docs after shdoc is installed (done)
-  - open release branch + PR for initial release
-  - verify CI docs job uses local shdoc install
+  - finish CI green (bashate/shellcheck)
+  - expand BATS coverage beyond smoke tests
+  - refresh README to document registry + optional deps

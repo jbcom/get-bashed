@@ -5,11 +5,15 @@
 - Memory bank + docs pipeline
 - CI workflows and release automation
 - Pre-commit policy and security docs
+- Centralized tools registry + handlers
+- Dotfile linking with backups + defaults
+- Git identity prompts + config output
+- Optional dependency gating by feature flags
 
 ## What's left
-- Run `scripts/gen-docs.sh` after shdoc install (done)
-- Create release branch and open PR for initial release
-- Review CI for shdoc availability on all platforms
+- CI green after bashate/shellcheck changes
+- Expand BATS coverage to core flows
+- Document tool registry and optional deps in README
 
 ## Known issues
 - shdoc not available via Homebrew on macOS; uses local prefix install.

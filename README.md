@@ -46,8 +46,17 @@ Use `--features` with comma lists (supports `no-` prefix):
 - `auto_tools`
 - `ssh_agent`
 - `doppler_env`
+- `bash_it`
+- `git_signing`
 - `dev_tools` (bundle)
 - `ops_tools` (bundle)
+
+## Tool Registry
+
+Installers are driven by a single registry in `installers/tools.sh`. Each tool
+declares supported install methods (brew/apt/dnf/yum/pacman/pipx/git/curl) and
+dependencies, and optional dependencies can be enabled via features (for
+example, `git_signing` adds `gnupg` when installing `git`).
 
 ## Installers
 
