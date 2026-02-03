@@ -1,8 +1,8 @@
 # get-bashed
 
-[![CI](https://github.com/jbdevprimary/get-bashed/actions/workflows/ci.yml/badge.svg)](https://github.com/jbdevprimary/get-bashed/actions/workflows/ci.yml)
-[![Docs](https://github.com/jbdevprimary/get-bashed/actions/workflows/docs.yml/badge.svg)](https://github.com/jbdevprimary/get-bashed/actions/workflows/docs.yml)
-[![Release](https://github.com/jbdevprimary/get-bashed/actions/workflows/release-please.yml/badge.svg)](https://github.com/jbdevprimary/get-bashed/actions/workflows/release-please.yml)
+[![CI](https://github.com/jbcom/get-bashed/actions/workflows/ci.yml/badge.svg)](https://github.com/jbcom/get-bashed/actions/workflows/ci.yml)
+[![Docs](https://github.com/jbcom/get-bashed/actions/workflows/docs.yml/badge.svg)](https://github.com/jbcom/get-bashed/actions/workflows/docs.yml)
+[![Release](https://github.com/jbcom/get-bashed/actions/workflows/release-please.yml/badge.svg)](https://github.com/jbcom/get-bashed/actions/workflows/release-please.yml)
 
 A modern, modular Bash environment you can install anywhere. get-bashed is designed to be readable, portable, and safe to extend, with a clean installer that supports interactive and non-interactive setups.
 
@@ -17,7 +17,7 @@ A modern, modular Bash environment you can install anywhere. get-bashed is desig
 ## Quick Start
 
 ```bash
-curl -fsSL -o install.sh https://raw.githubusercontent.com/jbdevprimary/get-bashed/main/install.sh
+curl -fsSL -o install.sh https://raw.githubusercontent.com/jbcom/get-bashed/main/install.sh
 # Review install.sh before running
 sh install.sh
 ```
