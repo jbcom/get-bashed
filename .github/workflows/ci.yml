@@ -17,7 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
-      - uses: bats-core/bats-action@e412797c46257a2dbf3775f6f6010b33ee6cb99f  # v3.0.1
+      - name: CI setup (get-bashed)
+        run: ./scripts/ci-setup.sh "bats"
       - name: Fetch Bats helpers
         run: ./scripts/test-setup.sh
       - name: Run tests
