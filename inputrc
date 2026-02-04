@@ -1,0 +1,7 @@
+# @file inputrc
+# @brief get-bashed readline defaults.
+# @description
+#     Minimal readline configuration used when linking dotfiles.
+
+set completion-ignore-case on
+set show-all-if-ambiguous on

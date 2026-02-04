@@ -1,0 +1,21 @@
+name: PR Title
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  lint-title:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
+      - name: Validate PR title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          title="$PR_TITLE"
+          pattern='^(feat|fix|docs|style|refactor|perf|test|chore|ci|build|revert)(\([a-z0-9._-]+\))?: .+'
+          if [[ ! "$title" =~ $pattern ]]; then
+            echo "Invalid PR title: $title" >&2
+            echo "Expected Conventional Commit format, e.g., 'feat: add installer'." >&2
+            exit 1
+          fi

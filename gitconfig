@@ -1,0 +1,26 @@
+[user]
+    name = Your Name
+    email = you@example.com
+
+[core]
+    editor = vim
+    pager = less -FRSX
+
+[init]
+    defaultBranch = main
+
+[pull]
+    rebase = false
+
+[fetch]
+    prune = true
+
+[color]
+    ui = auto
+
+[alias]
+    st = status -sb
+    co = checkout
+    br = branch
+    ci = commit
+    lg = log --oneline --decorate --graph --all

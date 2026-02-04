@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+for plugin in $(asdf plugin list); do
+  asdf install "$plugin" latest
+done
+
+for plugin in $(asdf plugin list); do
+  versions=$(asdf list "$plugin" | sed 's/^[[:space:]]*//' | grep -v '^latest$')
+  if [[ -z "$versions" ]]; then
+    echo "No versions installed for $plugin"
+    continue
+  fi
+
+  latest_version=$(echo "$versions" | sort -V | tail -n 1)
+  echo "Setting $plugin to $latest_version"
+  asdf set "$plugin" "$latest_version"
+done
