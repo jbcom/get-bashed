@@ -16,7 +16,7 @@ The project has achieved functional stability across the core installer and runt
 ### Installer Core
 - **POSIX Bootstrap**: `install.sh` handles initial environment probing and Bash acquisition.
 - **Bash Installer**: `install.bash` provides full profile/feature resolution and config generation.
-- **Idempotent Wiring**: Symlink-only dotfile strategy in `~/.get-bashed` with automated backups.
+- **Idempotent Wiring**: Dotfiles are copied into `~/.get-bashed` with automated backups, then optionally symlinked into `$HOME` or sourced via snippets injected into shell profiles.
 - **Dependency Registry**: Depth-first resolution with circular dependency detection.
 - **Git Identity**: Integrated identity prompts and `gitconfig` template application.
 
@@ -38,7 +38,7 @@ The project has achieved functional stability across the core installer and runt
 ## Recent Changes
 - **Standardized Documentation**: Aligned all `.md` files with brand-aware headers and professional tone.
 - **Workflow Consolidation**: Moved to the tight four-workflow pattern with pinned SHAs.
-- **Release Please Config**: Standardized `release-please-config.json` (unhidden) and manifest.
+- **Release Please Config**: Standardized `release-please-config.json` (unhidden) alongside existing manifest.
 - **Doc Index Protection**: Updated `gen-docs.sh` to preserve frontmatter in generated indices.
 
 ## What is next

@@ -14,7 +14,7 @@ get-bashed is designed with a strict separation between the **installer** (idemp
 - **Generated Configuration**: Choices made during installation are persisted in `get-bashedrc.sh`, ensuring the runtime is decoupled from the installer's logic.
 - **Centralized Registry**: A single source of truth (`installers/tools.sh`) defines all tool metadata and dependencies.
 - **Isolated Secrets**: Secrets are sourced exclusively from `~/.get-bashed/secrets.d/`, keeping them out of the main configuration flow.
-- **Idempotent Symlinking**: Dotfiles are symlinked into `~/.get-bashed` rather than copied, allowing for clean updates and easy backups.
+- **Managed Install Prefix**: Runtime files and dotfiles are copied into `~/.get-bashed`; when `--link-dotfiles` is enabled, corresponding files in `$HOME` are symlinked to that managed prefix, allowing clean updates and easy backups.
 
 ## Non-Goals
 
@@ -51,9 +51,11 @@ get-bashed is designed with a strict separation between the **installer** (idemp
 | `10-` | Shared helper functions |
 | `20-` | PATH construction |
 | `30-` | Build flags (conditional) |
+| `40-` | Shell completions |
 | `50-` | Tool initialization (starship, direnv) |
 | `60-` | Version management (asdf) |
 | `70-` | Frameworks (bash-it) and general env |
+| `80-` | Extended aliases |
 | `90-` | Shell functions |
 | `95-` | SSH agent management |
 | `99-` | Local secrets sourcing |
@@ -65,7 +67,7 @@ graph TD
     A[install.sh] --> B[install.bash]
     B --> C[~/.get-bashed/get-bashedrc.sh]
     B --> D[~/.get-bashed/bashrc.d/]
-    
+
     E[Shell Startup] --> F[~/.bashrc]
     F --> G[~/.get-bashed/bashrc]
     G --> C
