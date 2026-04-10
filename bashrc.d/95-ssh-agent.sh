@@ -21,7 +21,10 @@ if [[ "${GET_BASHED_SSH_AGENT:-0}" == "1" ]] && [[ -t 1 ]]; then
     if _ssh_agent_usable "$SSH_AGENT_SOCK"; then
       export SSH_AUTH_SOCK="$SSH_AGENT_SOCK"
     else
-      (umask 077; eval "$(ssh-agent -a "$SSH_AGENT_SOCK" -s)" >/dev/null)
+      old_umask="$(umask)"
+      umask 077
+      eval "$(ssh-agent -a "$SSH_AGENT_SOCK" -s)" >/dev/null
+      umask "$old_umask"
     fi
   fi
 

@@ -563,10 +563,18 @@ fi
   echo "export GET_BASHED_GIT_SIGNING=${GET_BASHED_GIT_SIGNING}"
   echo "export GET_BASHED_VIMRC_MODE=\"${GET_BASHED_VIMRC_MODE}\""
   if [[ -n "$USER_NAME" ]]; then
-    echo "export GET_BASHED_USER_NAME=\"${USER_NAME//\"/\\\"}\""
+    _escaped="${USER_NAME//\\/\\\\}"  # escape backslashes first
+    _escaped="${_escaped//\$/\\\$}"   # escape dollar signs
+    _escaped="${_escaped//\"/\\\"}"   # escape double quotes
+    _escaped="${_escaped//\`/\\\`}"   # escape backticks
+    echo "export GET_BASHED_USER_NAME=\"${_escaped}\""
   fi
   if [[ -n "$USER_EMAIL" ]]; then
-    echo "export GET_BASHED_USER_EMAIL=\"${USER_EMAIL//\"/\\\"}\""
+    _escaped="${USER_EMAIL//\\/\\\\}"  # escape backslashes first
+    _escaped="${_escaped//\$/\\\$}"   # escape dollar signs
+    _escaped="${_escaped//\"/\\\"}"   # escape double quotes
+    _escaped="${_escaped//\`/\\\`}"   # escape backticks
+    echo "export GET_BASHED_USER_EMAIL=\"${_escaped}\""
   fi
 } > "$PREFIX/get-bashedrc.sh"
 

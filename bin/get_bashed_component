@@ -32,8 +32,15 @@ if [[ $# -eq 0 ]]; then
   exit 1
 fi
 
-# Find true path of script
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Find true path of script (handling symlinks)
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do
+  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+SCRIPT_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+
 GET_BASHED_HOME="$(dirname "$SCRIPT_DIR")"
 HELPERS="$GET_BASHED_HOME/installers/_helpers.sh"
 if [[ -r "$HELPERS" ]]; then

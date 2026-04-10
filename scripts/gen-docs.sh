@@ -76,7 +76,6 @@ for f in "$ROOT_DIR/bashrc.d"/*.sh; do
 done
 shopt -u nullglob
 shdoc < "$TMP_MODULES" > "$ROOT_DIR/docs/MODULES.md"
-rm -f "$TMP_MODULES"
 fix_toc_anchors "$ROOT_DIR/docs/MODULES.md"
 ensure_eof "$ROOT_DIR/docs/MODULES.md"
 

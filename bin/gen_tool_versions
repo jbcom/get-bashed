@@ -4,12 +4,14 @@
 
 set -euo pipefail
 
-for plugin in $(asdf plugin list 2>/dev/null || true); do
+plugins="$(asdf plugin list 2>/dev/null || true)"
+
+for plugin in $plugins; do
   [[ -z "$plugin" ]] && continue
   asdf install "$plugin" latest
 done
 
-for plugin in $(asdf plugin list 2>/dev/null || true); do
+for plugin in $plugins; do
   [[ -z "$plugin" ]] && continue
   versions=$(asdf list "$plugin" 2>/dev/null | sed 's/^[[:space:]]*//' | grep -v '^latest$' || true)
   if [[ -z "$versions" ]]; then
