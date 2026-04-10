@@ -1,11 +1,19 @@
 #!/usr/bin/env bash
+# @file gen_tool_versions
+# @brief Update all asdf plugins to latest versions.
 
-for plugin in $(asdf plugin list); do
+set -euo pipefail
+
+plugins="$(asdf plugin list 2>/dev/null || true)"
+
+for plugin in $plugins; do
+  [[ -z "$plugin" ]] && continue
   asdf install "$plugin" latest
 done
 
-for plugin in $(asdf plugin list); do
-  versions=$(asdf list "$plugin" | sed 's/^[[:space:]]*//' | grep -v '^latest$')
+for plugin in $plugins; do
+  [[ -z "$plugin" ]] && continue
+  versions=$(asdf list "$plugin" 2>/dev/null | sed 's/^[[:space:]]*//' | grep -v '^latest$' || true)
   if [[ -z "$versions" ]]; then
     echo "No versions installed for $plugin"
     continue

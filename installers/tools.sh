@@ -143,6 +143,9 @@ tool_register starship "starship" "" "macos,linux,wsl" "brew"
 tool_pkgs starship "starship" "" "" "" ""
 tool_bin starship "starship"
 
+tool_register eza "eza (modern ls)" "" "macos,linux,wsl" "brew,apt,dnf,yum,pacman"
+tool_pkgs eza "eza" "eza" "eza" "eza" "eza"
+
 tool_register rg "ripgrep" "" "macos,linux,wsl" "brew,apt,dnf,yum,pacman"
 tool_pkgs rg "ripgrep" "ripgrep" "ripgrep" "ripgrep" "ripgrep"
 

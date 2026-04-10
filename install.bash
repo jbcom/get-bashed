@@ -208,8 +208,8 @@ apply_feature() {
       fi
       ;;
     git_signing) GET_BASHED_GIT_SIGNING=$v ;;
-    dev_tools) GROUP_INSTALLS="${GROUP_INSTALLS},rg,fd,bat,fzf,jq,yq,tree,direnv,starship,nodejs,python,bash" ;;
-    ops_tools) GROUP_INSTALLS="${GROUP_INSTALLS},gh,git_lfs,terraform,awscli,kubectl,helm,stern,doppler,nodejs,python,java,bash" ;;
+    dev_tools) GROUP_INSTALLS="${GROUP_INSTALLS},rg,fd,bat,eza,fzf,jq,yq,tree,direnv,starship,nodejs,python,bash" ;;
+    ops_tools) GROUP_INSTALLS="${GROUP_INSTALLS},gh,git_lfs,terraform,awscli,kubectl,helm,stern,doppler,eza,nodejs,python,java,bash" ;;
     *) return 1 ;;
   esac
 }
@@ -264,6 +264,7 @@ backup_file() {
   [[ -e "$file" ]] || return 0
   local backup_dir="$PREFIX/backup"
   mkdir -p "$backup_dir"
+  chmod 700 "$backup_dir"
   local base
   base="$(basename "$file")"
   base="${base#.}"
@@ -539,11 +540,15 @@ cp -f "$REPO_DIR/gitconfig" "$PREFIX/gitconfig"
 
 # secrets.d bootstrap (only inside GET_BASHED_HOME)
 mkdir -p "$PREFIX/secrets.d"
+chmod 700 "$PREFIX/secrets.d"
 if [[ ! -e "$PREFIX/secrets.d/00-local.sh" ]]; then
-  cat <<'__SECRETS__' > "$PREFIX/secrets.d/00-local.sh"
+  (
+    umask 077
+    cat <<'__SECRETS__' > "$PREFIX/secrets.d/00-local.sh"
 # Place local secrets here. Example:
 # export FOO="bar"
 __SECRETS__
+  )
 fi
 
 # Write config file
@@ -558,10 +563,18 @@ fi
   echo "export GET_BASHED_GIT_SIGNING=${GET_BASHED_GIT_SIGNING}"
   echo "export GET_BASHED_VIMRC_MODE=\"${GET_BASHED_VIMRC_MODE}\""
   if [[ -n "$USER_NAME" ]]; then
-    echo "export GET_BASHED_USER_NAME=\"${USER_NAME}\""
+    _escaped="${USER_NAME//\\/\\\\}"  # escape backslashes first
+    _escaped="${_escaped//\$/\\\$}"   # escape dollar signs
+    _escaped="${_escaped//\"/\\\"}"   # escape double quotes
+    _escaped="${_escaped//\`/\\\`}"   # escape backticks
+    echo "export GET_BASHED_USER_NAME=\"${_escaped}\""
   fi
   if [[ -n "$USER_EMAIL" ]]; then
-    echo "export GET_BASHED_USER_EMAIL=\"${USER_EMAIL}\""
+    _escaped="${USER_EMAIL//\\/\\\\}"  # escape backslashes first
+    _escaped="${_escaped//\$/\\\$}"   # escape dollar signs
+    _escaped="${_escaped//\"/\\\"}"   # escape double quotes
+    _escaped="${_escaped//\`/\\\`}"   # escape backticks
+    echo "export GET_BASHED_USER_EMAIL=\"${_escaped}\""
   fi
 } > "$PREFIX/get-bashedrc.sh"
 

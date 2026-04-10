@@ -25,3 +25,9 @@ ex () {
     *)         echo "'$f' cannot be extracted via ex()" >&2; return 1 ;;
   esac
 }
+
+# @description Make a directory and immediately cd into it.
+# @arg $1 string Directory path.
+mkcd() {
+  mkdir -p "$1" && cd "$1" || return 1
+}

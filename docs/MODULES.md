@@ -13,6 +13,7 @@ Runtime module loaded by get-bashed in lexicographic order.
 * [doppler_shell](#doppler_shell)
 * [get_bashed_component](#get_bashed_component)
 * [ex](#ex)
+* [mkcd](#mkcd)
 
 ### _path_add_front
 
@@ -37,4 +38,12 @@ Optional bash-it integration.
 ### ex
 
 Runtime module loaded by get-bashed in lexicographic order.
+
+### mkcd
+
+Make a directory and immediately cd into it.
+
+#### Arguments
+
+* **$1** (string): Directory path.
 
