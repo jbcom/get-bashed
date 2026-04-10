@@ -2,6 +2,18 @@
 
 Installer and configurator for get-bashed.
 
+## ⚠️ Upgrading & Breaking Changes
+
+**BREAKING CHANGE:** As of the latest release, get-bashed consolidates all runtime modules, local secrets, and dotfiles into a single managed prefix (default: `~/.get-bashed/`).
+
+If you are upgrading from a legacy installation (where files were stored in `~/.bashrc.d` and `~/.secrets.d`), the installer will attempt to automatically migrate your custom scripts and secrets into the new managed prefix.
+
+**Before upgrading, it is highly recommended to back up your custom modules:**
+```bash
+cp -r ~/.bashrc.d ~/bashrc.d.backup 2>/dev/null || true
+cp -r ~/.secrets.d ~/secrets.d.backup 2>/dev/null || true
+```
+
 ## Overview
 
 Supports non-interactive and interactive installation with profiles,
