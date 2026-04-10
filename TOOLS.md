@@ -1,3 +1,10 @@
+---
+title: Tools and Language Management
+updated: 2026-04-09
+status: current
+domain: technical
+---
+
 # Tools & Language Management
 
 This project favors **asdf** for multi-version language management and keeps shell behavior deterministic.

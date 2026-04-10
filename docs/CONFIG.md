@@ -1,3 +1,10 @@
+---
+title: Configuration
+updated: 2026-04-09
+status: current
+domain: technical
+---
+
 # Configuration
 
 get-bashed writes a generated config file at:

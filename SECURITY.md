@@ -1,3 +1,10 @@
+---
+title: Security Policy
+updated: 2026-04-09
+status: current
+domain: technical
+---
+
 # Security Policy
 
 This project prioritizes safe defaults, explicit install paths, and minimal privilege. Please help keep it secure by reporting issues responsibly.

@@ -1,3 +1,10 @@
+---
+title: Docs Index
+updated: 2026-04-09
+status: current
+domain: technical
+---
+
 # get-bashed Docs
 
 Generated docs:

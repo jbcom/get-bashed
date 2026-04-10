@@ -1,3 +1,10 @@
+---
+title: Contributing
+updated: 2026-04-09
+status: current
+domain: technical
+---
+
 # Contributing
 
 Thanks for helping improve get-bashed. This repo is intentionally shell-first, portable, and designed to be easy to reason about.

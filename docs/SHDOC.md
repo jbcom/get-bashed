@@ -1,3 +1,10 @@
+---
+title: shdoc
+updated: 2026-04-09
+status: current
+domain: technical
+---
+
 # shdoc
 
 This repo uses `shdoc` to generate documentation from shell scripts.
