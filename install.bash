@@ -19,7 +19,7 @@ fi
 usage() {
   cat <<'USAGE'
 Usage: install.sh [--prefix PATH] [--force] [--with-ui]
-                  [--auto] [--yes]
+                  [--auto] [--yes] 
                   [--profiles minimal|dev|ops[,..]]
                   [--features gnu_over_bsd,build_flags,...]
                   [--install brew,asdf,doppler,...]
@@ -71,7 +71,7 @@ GET_BASHED_GIT_SIGNING=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --prefix)
+    --prefix) 
       if [[ $# -lt 2 ]]; then
         echo "Error: --prefix requires a value" >&2
         usage
@@ -515,6 +515,41 @@ if [[ "$DRY_RUN" -eq 1 ]]; then
   echo "  Installers: ${INSTALLS:-<none>}"
 fi
 
+# @internal
+migrate_legacy() {
+  local legacy_rc_d="$HOME/.bashrc.d"
+  local legacy_secrets_d="$HOME/.secrets.d"
+
+  if [[ -d "$legacy_rc_d" && ! -L "$legacy_rc_d" ]]; then
+    echo "Migrating legacy .bashrc.d to $PREFIX/bashrc.d..."
+    mkdir -p "$PREFIX/bashrc.d"
+    # Copy files, avoid error if empty
+    find "$legacy_rc_d" -type f -exec cp -p {} "$PREFIX/bashrc.d/" \;
+    rm -rf "$legacy_rc_d"
+  fi
+
+  if [[ -d "$legacy_secrets_d" && ! -L "$legacy_secrets_d" ]]; then
+    echo "Migrating legacy .secrets.d to $PREFIX/secrets.d..."
+    mkdir -p "$PREFIX/secrets.d"
+    chmod 700 "$PREFIX/secrets.d"
+    find "$legacy_secrets_d" -type f -exec cp -p {} "$PREFIX/secrets.d/" \;
+    rm -rf "$legacy_secrets_d"
+  fi
+
+  # Detect and fix "template as file" loop hazard
+  for f in "$HOME/.bashrc" "$HOME/.bash_profile"; do
+    if [[ -f "$f" && ! -L "$f" ]]; then
+      if grep -q "@file bashrc" "$f" || grep -q "@file bash_profile" "$f"; then
+        if [[ "$LINK_DOTFILES" -eq 0 ]]; then
+          echo "Detected recursive loop hazard in $f. Cleaning..."
+          backup_file "$f"
+          echo "# get-bashed: recovered from loop" > "$f"
+        fi
+      fi
+    fi
+  done
+}
+
 mkdir -p "$PREFIX"
 export GET_BASHED_HOME="$PREFIX"
 export GET_BASHED_VIMRC_MODE="$VIMRC_MODE"
@@ -537,6 +572,8 @@ cp -f "$REPO_DIR/bash_aliases" "$PREFIX/bash_aliases"
 cp -f "$REPO_DIR/inputrc" "$PREFIX/inputrc"
 cp -f "$REPO_DIR/vimrc" "$PREFIX/vimrc"
 cp -f "$REPO_DIR/gitconfig" "$PREFIX/gitconfig"
+
+migrate_legacy
 
 # secrets.d bootstrap (only inside GET_BASHED_HOME)
 mkdir -p "$PREFIX/secrets.d"
@@ -597,10 +634,10 @@ else
  # shellcheck disable=SC2016
 BASHRC_LINE="# get-bashed: source modular bashrc"
  # shellcheck disable=SC2016
-BASHRC_SNIP='if [[ -r "$HOME/.get-bashed/bashrc" ]]; then source "$HOME/.get-bashed/bashrc"; fi'
+BASHRC_SNIP="if [[ -r \"$PREFIX/bashrc\" ]]; then source \"$PREFIX/bashrc\"; fi"
 BASH_PROFILE_LINE="# get-bashed: source login bash_profile"
  # shellcheck disable=SC2016
-BASH_PROFILE_SNIP='if [[ -r "$HOME/.get-bashed/bash_profile" ]]; then source "$HOME/.get-bashed/bash_profile"; fi'
+BASH_PROFILE_SNIP="if [[ -r \"$PREFIX/bash_profile\" ]]; then source \"$PREFIX/bash_profile\"; fi"
 
   ensure_block "$HOME/.bashrc" "$BASHRC_LINE" "$BASHRC_SNIP"
   ensure_block "$HOME/.bash_profile" "$BASH_PROFILE_LINE" "$BASH_PROFILE_SNIP"
