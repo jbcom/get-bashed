@@ -20,6 +20,7 @@ shdoc < "$ROOT_DIR/installers/tools.sh" > "$ROOT_DIR/docs/INSTALLERS.md"
 fix_toc_anchors() {
   local file="$1" tmp
   tmp="$(mktemp)"
+  trap 'rm -f "$tmp"' RETURN
   awk '
     function anchorize(text,   t) {
       t = tolower(text)
@@ -62,6 +63,7 @@ done
 
 # Combine all runtime modules
 TMP_MODULES="$(mktemp)"
+trap 'rm -f "$TMP_MODULES"' EXIT
 shopt -s nullglob
 for f in "$ROOT_DIR/bashrc.d"/*.sh; do
   {

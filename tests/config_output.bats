@@ -30,3 +30,20 @@ load test_helper
   run grep -F "export GET_BASHED_GNU=1" "$TEST_HOME/.get-bashed/get-bashedrc.sh"
   assert_success
 }
+
+@test "installer correctly escapes quotes in identity fields" {
+  TMPDIR="$(mktemp -d)"
+  HOME="$TMPDIR/home"
+  mkdir -p "$HOME"
+  TEST_HOME="$HOME"
+
+  USER_NAME='Jane "Danger" Doe'
+  USER_EMAIL='jane"quote"@example.com'
+
+  HOME="$TEST_HOME" bash ./install.sh --auto --name "$USER_NAME" --email "$USER_EMAIL" --prefix "$TEST_HOME/.get-bashed" --force
+
+  run grep -F "GET_BASHED_USER_NAME=\"Jane \\\"Danger\\\" Doe\"" "$TEST_HOME/.get-bashed/get-bashedrc.sh"
+  assert_success
+  run grep -F "GET_BASHED_USER_EMAIL=\"jane\\\"quote\\\"@example.com\"" "$TEST_HOME/.get-bashed/get-bashedrc.sh"
+  assert_success
+}

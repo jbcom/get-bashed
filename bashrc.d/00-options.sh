@@ -6,7 +6,7 @@
 
 # Shell options, history, editor
 shopt -s histappend checkwinsize cmdhist lithist autocd cdspell checkjobs expand_aliases
-HISTIGNORE="&:history:ls:ls * ps:ps -A:[bf]g:exit:${HISTIGNORE}"
+HISTIGNORE="&:history:ls:ls *:ps:ps -A:[bf]g:exit:${HISTIGNORE}"
 
 # Editor default (respect existing)
 : "${EDITOR:=vim}"

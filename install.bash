@@ -264,6 +264,7 @@ backup_file() {
   [[ -e "$file" ]] || return 0
   local backup_dir="$PREFIX/backup"
   mkdir -p "$backup_dir"
+  chmod 700 "$backup_dir"
   local base
   base="$(basename "$file")"
   base="${base#.}"
@@ -539,11 +540,15 @@ cp -f "$REPO_DIR/gitconfig" "$PREFIX/gitconfig"
 
 # secrets.d bootstrap (only inside GET_BASHED_HOME)
 mkdir -p "$PREFIX/secrets.d"
+chmod 700 "$PREFIX/secrets.d"
 if [[ ! -e "$PREFIX/secrets.d/00-local.sh" ]]; then
-  cat <<'__SECRETS__' > "$PREFIX/secrets.d/00-local.sh"
+  (
+    umask 077
+    cat <<'__SECRETS__' > "$PREFIX/secrets.d/00-local.sh"
 # Place local secrets here. Example:
 # export FOO="bar"
 __SECRETS__
+  )
 fi
 
 # Write config file
@@ -558,10 +563,10 @@ fi
   echo "export GET_BASHED_GIT_SIGNING=${GET_BASHED_GIT_SIGNING}"
   echo "export GET_BASHED_VIMRC_MODE=\"${GET_BASHED_VIMRC_MODE}\""
   if [[ -n "$USER_NAME" ]]; then
-    echo "export GET_BASHED_USER_NAME=\"${USER_NAME}\""
+    echo "export GET_BASHED_USER_NAME=\"${USER_NAME//\"/\\\"}\""
   fi
   if [[ -n "$USER_EMAIL" ]]; then
-    echo "export GET_BASHED_USER_EMAIL=\"${USER_EMAIL}\""
+    echo "export GET_BASHED_USER_EMAIL=\"${USER_EMAIL//\"/\\\"}\""
   fi
 } > "$PREFIX/get-bashedrc.sh"
 

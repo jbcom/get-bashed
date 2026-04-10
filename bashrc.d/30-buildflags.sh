@@ -7,10 +7,12 @@
 # Build flags for compiling language runtimes (optional)
 # Enable with GET_BASHED_BUILD_FLAGS=1
 if [[ "${GET_BASHED_BUILD_FLAGS:-0}" == "1" ]] && command -v brew >/dev/null 2>&1; then
-  OPENSSL_PREFIX="$(brew --prefix openssl@3 2>/dev/null || brew --prefix openssl 2>/dev/null)"
-  READLINE_PREFIX="$(brew --prefix readline 2>/dev/null)"
-  GETTEXT_PREFIX="$(brew --prefix gettext 2>/dev/null)"
-  ZSTD_PREFIX="$(brew --prefix zstd 2>/dev/null)"
+  BREW_PREFIX="$(dirname "$(dirname "$(command -v brew)")")"
+  OPENSSL_PREFIX="$BREW_PREFIX/opt/openssl@3"
+  [[ -d "$OPENSSL_PREFIX" ]] || OPENSSL_PREFIX="$BREW_PREFIX/opt/openssl"
+  READLINE_PREFIX="$BREW_PREFIX/opt/readline"
+  GETTEXT_PREFIX="$BREW_PREFIX/opt/gettext"
+  ZSTD_PREFIX="$BREW_PREFIX/opt/zstd"
 
   export LDFLAGS="-L${OPENSSL_PREFIX}/lib -L${READLINE_PREFIX}/lib -L${GETTEXT_PREFIX}/lib -L${ZSTD_PREFIX}/lib ${LDFLAGS}"
   export CPPFLAGS="-I${OPENSSL_PREFIX}/include -I${READLINE_PREFIX}/include -I${GETTEXT_PREFIX}/include -I${ZSTD_PREFIX}/include ${CPPFLAGS}"

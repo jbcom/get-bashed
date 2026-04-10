@@ -8,13 +8,13 @@
 
 # Homebrew shellenv (optional)
 if command -v brew >/dev/null 2>&1; then
-  if [[ "$(uname -m)" == "arm64" ]]; then
-    eval "$(/opt/homebrew/bin/brew shellenv)"
-  elif [[ -x /usr/local/bin/brew ]]; then
-    eval "$(/usr/local/bin/brew shellenv)"
-  else
-    eval "$(brew shellenv)"
-  fi
+  BREW_PREFIX="$(dirname "$(dirname "$(command -v brew)")")"
+  export HOMEBREW_PREFIX="$BREW_PREFIX"
+  export HOMEBREW_CELLAR="$BREW_PREFIX/Cellar"
+  export HOMEBREW_REPOSITORY="$BREW_PREFIX"
+  export PATH="$BREW_PREFIX/bin:$BREW_PREFIX/sbin${PATH+:$PATH}"
+  export MANPATH="$BREW_PREFIX/share/man${MANPATH+:$MANPATH}:"
+  export INFOPATH="$BREW_PREFIX/share/info:${INFOPATH:-}"
 fi
 
 # Hand off to interactive rc

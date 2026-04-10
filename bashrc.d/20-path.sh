@@ -21,10 +21,11 @@ path_add "$HOME/.asdf/shims"
 # Optional: prefer GNU tools on macOS (requires Homebrew coreutils, gnu-sed, etc.)
 # Set GET_BASHED_GNU=1 to enable.
 if [[ "${GET_BASHED_GNU:-0}" == "1" ]] && command -v brew >/dev/null 2>&1; then
-  path_add "$(brew --prefix coreutils)/libexec/gnubin"
-  path_add "$(brew --prefix findutils)/libexec/gnubin"
-  path_add "$(brew --prefix gnu-sed)/libexec/gnubin"
-  path_add "$(brew --prefix gnu-tar)/libexec/gnubin"
+  BREW_PREFIX="$(dirname "$(dirname "$(command -v brew)")")"
+  path_add "$BREW_PREFIX/opt/coreutils/libexec/gnubin"
+  path_add "$BREW_PREFIX/opt/findutils/libexec/gnubin"
+  path_add "$BREW_PREFIX/opt/gnu-sed/libexec/gnubin"
+  path_add "$BREW_PREFIX/opt/gnu-tar/libexec/gnubin"
 fi
 
 # Deduplicate once at end
