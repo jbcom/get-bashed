@@ -208,8 +208,8 @@ apply_feature() {
       fi
       ;;
     git_signing) GET_BASHED_GIT_SIGNING=$v ;;
-    dev_tools) GROUP_INSTALLS="${GROUP_INSTALLS},rg,fd,bat,fzf,jq,yq,tree,direnv,starship,nodejs,python,bash" ;;
-    ops_tools) GROUP_INSTALLS="${GROUP_INSTALLS},gh,git_lfs,terraform,awscli,kubectl,helm,stern,doppler,nodejs,python,java,bash" ;;
+    dev_tools) GROUP_INSTALLS="${GROUP_INSTALLS},rg,fd,bat,eza,fzf,jq,yq,tree,direnv,starship,nodejs,python,bash" ;;
+    ops_tools) GROUP_INSTALLS="${GROUP_INSTALLS},gh,git_lfs,terraform,awscli,kubectl,helm,stern,doppler,eza,nodejs,python,java,bash" ;;
     *) return 1 ;;
   esac
 }
