@@ -1,9 +1,3 @@
----
-title: MODULES.md — get-bashed
-updated: 2026-04-10
-status: current
----
-
 # 99-secrets
 
 get-bashed module: 99-secrets

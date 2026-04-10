@@ -22,6 +22,8 @@ jobs:
       - uses: googleapis/release-please-action@16a9c90856f42705d54a6fda1823352bdc62cf38 # v4.4.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
 
   docs:
     name: Docs Deployment
@@ -29,19 +31,19 @@ jobs:
     needs: release-please
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
+        with:
+          enable-cache: true
       - name: CI setup (get-bashed)
         run: ./scripts/ci-setup.sh "shdoc"
-      - name: Generate docs
+      - name: Generate shell docs
         run: ./scripts/gen-docs.sh
-      - name: Ensure landing page
-        run: |
-          if [[ ! -f docs/index.md ]]; then
-            cp docs/INDEX.md docs/index.md
-          fi
+      - name: Build Sphinx docs
+        run: uvx tox -e docs
       - name: Upload pages artifact
         uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4.0.0
         with:
-          path: docs
+          path: docs/_build/html
 
   deploy-docs:
     name: Deploy Docs

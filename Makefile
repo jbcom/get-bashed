@@ -3,6 +3,7 @@
 
 docs:
 	./scripts/gen-docs.sh
+	tox -e docs
 
 lint:
 	pre-commit run --all-files

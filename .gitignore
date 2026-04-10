@@ -1,1 +1,4 @@
 tests/lib/
+docs/_build/
+.tox/
+__pycache__/

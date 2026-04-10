@@ -78,22 +78,5 @@ rm -f "$TMP_MODULES"
 fix_toc_anchors "$ROOT_DIR/docs/MODULES.md"
 ensure_eof "$ROOT_DIR/docs/MODULES.md"
 
-# Generate index
-{
-  if head -n 1 "$ROOT_DIR/docs/INDEX.md" | grep -q "^---"; then
-    sed -n '1,/^---/p' "$ROOT_DIR/docs/INDEX.md"
-    echo ""
-  else
-    echo "# get-bashed Docs"
-    echo ""
-  fi
-  echo "Generated docs:"
-  for f in "$ROOT_DIR/docs"/*.md; do
-    base="$(basename "$f")"
-    [[ "$base" == "INDEX.md" ]] && continue
-    echo "- [$base]($base)"
-  done
-} > "$ROOT_DIR/docs/INDEX.md"
-ensure_eof "$ROOT_DIR/docs/INDEX.md"
-
+# Note: index.md is maintained manually for Sphinx toctree.
 echo "Docs generated under docs/"
