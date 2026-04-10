@@ -60,7 +60,7 @@ get-bashed is designed with a strict separation between the **installer** (idemp
 
 ## Data Flow
 
-```mermaid
+```{mermaid}
 graph TD
     A[install.sh] --> B[install.bash]
     B --> C[~/.get-bashed/get-bashedrc.sh]

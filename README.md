@@ -1,11 +1,14 @@
 ---
-title: get-bashed
-updated: 2026-04-09
+title: README.md — get-bashed
+updated: 2026-04-10
 status: current
-domain: technical
 ---
 
 # get-bashed
+
+<p align="center">
+  <img src="assets/logo.png" alt="get-bashed logo" width="300" />
+</p>
 
 [![CI](https://img.shields.io/github/actions/workflow/status/jbcom/get-bashed/ci.yml?branch=main)](https://github.com/jbcom/get-bashed/actions/workflows/ci.yml)
 [![Docs](https://img.shields.io/github/actions/workflow/status/jbcom/get-bashed/docs.yml?branch=main)](https://github.com/jbcom/get-bashed/actions/workflows/docs.yml)
