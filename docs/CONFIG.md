@@ -1,3 +1,9 @@
+---
+title: CONFIG.md — get-bashed
+updated: 2026-04-10
+status: current
+---
+
 # Configuration
 
 get-bashed writes a generated config file at:

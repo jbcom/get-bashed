@@ -1,3 +1,9 @@
+---
+title: SECURITY.md — get-bashed
+updated: 2026-04-10
+status: current
+---
+
 # Security Policy
 
 This project prioritizes safe defaults, explicit install paths, and minimal privilege. Please help keep it secure by reporting issues responsibly.

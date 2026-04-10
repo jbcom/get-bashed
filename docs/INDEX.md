@@ -1,3 +1,9 @@
+---
+title: INDEX.md — get-bashed
+updated: 2026-04-10
+status: current
+---
+
 # get-bashed Docs
 
 Generated docs:

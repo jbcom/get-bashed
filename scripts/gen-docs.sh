@@ -80,8 +80,13 @@ ensure_eof "$ROOT_DIR/docs/MODULES.md"
 
 # Generate index
 {
-  echo "# get-bashed Docs"
-  echo ""
+  if head -n 1 "$ROOT_DIR/docs/INDEX.md" | grep -q "^---"; then
+    sed -n '1,/^---/p' "$ROOT_DIR/docs/INDEX.md"
+    echo ""
+  else
+    echo "# get-bashed Docs"
+    echo ""
+  fi
   echo "Generated docs:"
   for f in "$ROOT_DIR/docs"/*.md; do
     base="$(basename "$f")"

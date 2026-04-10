@@ -1,169 +1,151 @@
-# Repository Guidelines
+---
+title: AGENTS.md — get-bashed
+updated: 2026-04-10
+status: current
+---
 
-This repository contains the **get-bashed** modular Bash setup. It is intended to be portable, auditable, and safe to install on macOS, Linux, and WSL.
+# get-bashed — Extended AI Protocols
 
-## Project Structure & Module Organization
+This file extends CLAUDE.md with architecture detail, patterns, and operational protocols for AI agents working in this repository.
 
-- `bashrc` / `bash_profile`: entrypoints sourced by the installer.
-- `bashrc.d/`: ordered modules (`00-` to `99-`) loaded in sequence.
-- `bin/`: curated helper scripts meant to be portable and non-sensitive.
-- `install.sh`: POSIX bootstrap that re-execs `install.bash`.
-- `install.bash`: idempotent installer that wires user dotfiles.
-- `installers/`: dependency-aware installers with metadata.
-- `tests/`: BATS test suite.
-- `.github/workflows/`: CI and release automation.
+## Architecture Overview
 
-## Build, Test, and Development Commands
+get-bashed has two distinct layers: the installer and the runtime.
 
-- `./install.sh --prefix ~/.get-bashed`: install locally for testing.
-- `bats tests`: run installer tests.
-- `./scripts/package.sh dist <version>`: build a release tarball.
-- `./scripts/gen-docs.sh`: generate shdoc-based docs.
+### Installer Layer
 
-## Coding Style & Naming Conventions
+`install.sh` is a POSIX-only bootstrap that locates or installs bash, then re-execs `install.bash`. `install.bash` is the full installer written in Bash 4+. It:
 
-- Shell: POSIX-ish Bash with strict mode in scripts (`set -euo pipefail`).
-- Modules: two-digit prefix and hyphenated names (e.g., `20-path.sh`).
-- Keep config portable; avoid hardcoding user-specific paths.
+1. Parses CLI arguments for profiles, features, and installer lists.
+2. Applies profiles (which set feature flag defaults).
+3. Applies feature flag overrides.
+4. Copies dotfiles and `bashrc.d/` to `PREFIX` (default `~/.get-bashed`).
+5. Writes a generated config file `get-bashedrc.sh` encoding the resolved flags.
+6. Optionally links dotfiles from `$HOME` to `~/.get-bashed` with backup.
+7. Runs selected tool installers in dependency order.
 
-## Testing Guidelines
+### Runtime Layer
 
-- Tests use BATS and should only validate install behavior and module wiring.
-- Keep tests deterministic and side-effect free (use temp `HOME`).
+`bashrc` is sourced by the user's `~/.bashrc`. It reads `get-bashedrc.sh` (the generated config), then sources all files in `bashrc.d/` matching `[0-9][0-9]-*.sh` in sorted order.
 
-## Commit & Pull Request Guidelines
+`bash_profile` handles login shells: initializes Homebrew shellenv, then delegates to `bashrc`.
 
-- Commits should be small, focused, and explain intent.
-- PRs should include:
-  - Summary of changes
-  - Install impact (if any)
-  - Updated docs when behavior changes
+### Tool Registry
 
-## Security & Secrets
+`installers/tools.sh` is the single source of truth for all installable tools. Each tool is declared with:
 
-- Secrets live in `~/.get-bashed/secrets.d/` (ignored by git).
-- `bashrc.d/99-secrets.sh` sources everything in `secrets.d/`.
+- `tool_register id desc deps platforms methods`
+- `tool_pkgs id brew apt dnf yum pacman` (package names per manager)
+- `tool_git id url` / `tool_curl id url cmd` (alternative sources)
+- `tool_handler id fn` (custom installation function)
+- `tool_opt_deps id "FLAG:dep,..."` (optional deps gated by feature flags)
 
-# Project Memory Bank
+`installers/_helpers.sh` contains platform detection helpers and all custom handler functions (`install_asdf`, `install_vimrc`, `install_shdoc`, `install_actionlint`, etc.).
 
-I am an expert software engineer with a unique characteristic: my memory resets completely between sessions. This isn't a limitation - it's what drives me to maintain precise documentation. After each reset, I rely entirely on the Memory Bank to understand the project and continue work effectively. I must read ALL memory bank files at the start of every task - this is not optional.
+### Config System
 
-## Memory Bank Structure
+The installer writes `~/.get-bashed/get-bashedrc.sh` encoding:
 
-The Memory Bank consists of core files and optional context files, all in Markdown format. Files build upon each other in a clear hierarchy:
+| Variable | Meaning |
+|---|---|
+| `GET_BASHED_GNU` | Prefer GNU tools over BSD on macOS |
+| `GET_BASHED_BUILD_FLAGS` | Export Homebrew build flags (CPPFLAGS, LDFLAGS, etc.) |
+| `GET_BASHED_AUTO_TOOLS` | Auto-install optional CLIs |
+| `GET_BASHED_SSH_AGENT` | Auto-start ssh-agent |
+| `GET_BASHED_USE_DOPPLER` | Enable Doppler env injection |
+| `GET_BASHED_USE_BASH_IT` | Enable bash-it framework |
+| `GET_BASHED_GIT_SIGNING` | Enable GPG git signing |
+| `GET_BASHED_VIMRC_MODE` | `awesome` or `basic` vimrc flavor |
 
-```
-flowchart TD
-    PB[projectbrief.md] --> PC[productContext.md]
-    PB --> SP[systemPatterns.md]
-    PB --> TC[techContext.md]
+Runtime modules read these flags and conditionally enable behavior.
 
-    PC --> AC[activeContext.md]
-    SP --> AC
-    TC --> AC
+### Profiles
 
-    AC --> P[progress.md]
-```
+Profiles live in `profiles/*.env`. Each defines `FEATURES` and `INSTALLS` values. Built-in profiles:
 
-### Core Files (Required)
-1. `projectbrief.md`
-   - Foundation document that shapes all other files
-   - Created at project start if it doesn't exist
-   - Defines core requirements and goals
-   - Source of truth for project scope
+- `minimal`: all flags off, no tools.
+- `dev`: GNU tools, build flags, auto tools. Installs dev CLI bundle.
+- `ops`: dev plus SSH agent, Doppler, kubectl, helm, stern, terraform, awscli.
 
-2. `productContext.md`
-   - Why this project exists
-   - Problems it solves
-   - How it should work
-   - User experience goals
+CLI `--features` and `--install` always override profile defaults.
 
-3. `activeContext.md`
-   - Current work focus
-   - Recent changes
-   - Next steps
-   - Active decisions and considerations
-   - Important patterns and preferences
-   - Learnings and project insights
+### Module Load Order
 
-4. `systemPatterns.md`
-   - System architecture
-   - Key technical decisions
-   - Design patterns in use
-   - Component relationships
-   - Critical implementation paths
+| Range | Purpose |
+|---|---|
+| `00-` | Shell options, history, editor |
+| `10-` | Shared helper functions |
+| `20-` | PATH construction |
+| `30-` | Build flags (conditional on `GET_BASHED_BUILD_FLAGS`) |
+| `40-` | Shell completions |
+| `50-` | Tool init (starship, direnv, cargo) |
+| `60-` | asdf version manager activation |
+| `65-` | Optional CLI tools |
+| `66-` | Doppler env integration |
+| `70-` | Aliases and env vars; bash-it init |
+| `80-` | Extended aliases |
+| `90-` | Shell functions |
+| `95-` | SSH agent management |
+| `99-` | Secrets sourcing from `secrets.d/` |
 
-5. `techContext.md`
-   - Technologies used
-   - Development setup
-   - Technical constraints
-   - Dependencies
-   - Tool usage patterns
+## Key Design Constraints
 
-6. `progress.md`
-   - What works
-   - What's left to build
-   - Current status
-   - Known issues
-   - Evolution of project decisions
+- `install.sh` must remain POSIX sh-compatible (no bashisms).
+- `install.bash` requires Bash 4+ (enforced at runtime with `BASH_VERSINFO` check).
+- All `bashrc.d/` modules must tolerate being sourced multiple times (idempotent).
+- No module may hard-code a user's home directory or username.
+- Tool installers prefer package managers over raw curl/git when available.
+- Optional dependencies are gated by feature flags, not hard-wired.
 
-### Additional Context
-Create additional files/folders within `memory-bank/` when they help organize:
-- Complex feature documentation
-- Integration specifications
-- API documentation
-- Testing strategies
-- Deployment procedures
-
-## Core Workflows
-
-### Plan Mode
-```
-flowchart TD
-    Start[Start] --> ReadFiles[Read Memory Bank]
-    ReadFiles --> CheckFiles{Files Complete?}
-
-    CheckFiles -->|No| Plan[Create Plan]
-    Plan --> Document[Document in Chat]
-
-    CheckFiles -->|Yes| Verify[Verify Context]
-    Verify --> Strategy[Develop Strategy]
-    Strategy --> Present[Present Approach]
-```
-
-### Act Mode
-```
-flowchart TD
-    Start[Start] --> Context[Check Memory Bank]
-    Context --> Update[Update Documentation]
-    Update --> Execute[Execute Task]
-    Execute --> Document[Document Changes]
-```
-
-## Documentation Updates
-
-Memory Bank updates occur when:
-1. Discovering new project patterns
-2. After implementing significant changes
-3. When user requests **update memory bank** (must review ALL files)
-4. When context needs clarification
+## Data Flow
 
 ```
-flowchart TD
-    Start[Update Process]
+User runs install.sh
+  └─> install.bash resolves profiles + features
+      └─> copies bashrc.d/, dotfiles to ~/.get-bashed/
+      └─> writes ~/.get-bashed/get-bashedrc.sh
+      └─> runs tool installers (dependency order)
+      └─> optionally symlinks ~/.bashrc -> ~/.get-bashed/bashrc
 
-    subgraph Process
-        P1[Review ALL Files]
-        P2[Document Current State]
-        P3[Clarify Next Steps]
-        P4[Document Insights & Patterns]
-
-        P1 --> P2 --> P3 --> P4
-    end
-
-    Start --> Process
+Shell startup
+  └─> ~/.bashrc sources ~/.get-bashed/bashrc
+      └─> sources get-bashedrc.sh (config)
+      └─> sources bash_aliases
+      └─> iterates bashrc.d/[0-9][0-9]-*.sh in order
+          └─> each module reads GET_BASHED_* flags as needed
 ```
 
-Note: When triggered by **update memory bank**, I must review every memory bank file, even if some don't require updates. Focus particularly on `activeContext.md` and `progress.md` as they track current state.
+## Docs Pipeline
 
-Remember: After every memory reset, I begin completely fresh. The Memory Bank is my only link to previous work. It must be maintained with precision and clarity, as my effectiveness depends entirely on its accuracy.
+`scripts/gen-docs.sh` uses shdoc to generate `docs/INSTALLER.md`, `docs/INSTALLERS_HELPERS.md`, `docs/INSTALLERS.md`, and `docs/MODULES.md` from shell script annotations. It then regenerates `docs/INDEX.md`.
+
+Run after any change to installer or module functions.
+
+## CI Workflows
+
+| Workflow | Trigger | Purpose |
+|---|---|---|
+| `ci.yml` | PR + push main | Lint (pre-commit), BATS tests, install verification |
+| `docs.yml` | PR + push main | Build and publish docs to GitHub Pages |
+| `pr-title.yml` | PR | Enforce Conventional Commits title format |
+| `release-please.yml` | push main | Auto-manage release PRs and CHANGELOG |
+| `release.yml` | version tag | Build release artifacts |
+| `autofix.yml` | PR | Auto-apply fixable lint issues |
+| `dependabot-automerge.yml` | Dependabot PR | Auto-merge minor/patch dependency updates |
+
+## Testing Approach
+
+Tests use BATS with pinned helper libraries (bats-support, bats-assert, bats-file). Each test runs the installer in an isolated temp `HOME` directory to prevent side effects on the host machine.
+
+`scripts/test-setup.sh` fetches helper libraries at pinned SHAs. Do not change these without auditing the new commits.
+
+## Security Surfaces
+
+Changes to any of the following require extra scrutiny:
+
+- `install.sh`, `install.bash`, `installers/` — arbitrary code execution during install
+- `bashrc.d/99-secrets.sh` — sources everything in `secrets.d/`
+- PATH construction (`bashrc.d/20-path.sh`) — ordering matters
+- Any `curl`/`git` download — must be from trusted sources
+
+See `SECURITY.md` for the full threat model and reporting guidance.

@@ -1,3 +1,9 @@
+---
+title: README.md — get-bashed
+updated: 2026-04-10
+status: current
+---
+
 # Docs Pipeline
 
 This repo uses `shdoc` to generate documentation from shell scripts.

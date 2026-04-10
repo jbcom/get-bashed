@@ -1,3 +1,9 @@
+---
+title: TOOLS.md — get-bashed
+updated: 2026-04-10
+status: current
+---
+
 # Tools & Language Management
 
 This project favors **asdf** for multi-version language management and keeps shell behavior deterministic.
