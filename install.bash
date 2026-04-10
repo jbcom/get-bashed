@@ -19,7 +19,7 @@ fi
 usage() {
   cat <<'USAGE'
 Usage: install.sh [--prefix PATH] [--force] [--with-ui]
-                  [--auto] [--yes]
+                  [--auto] [--yes] 
                   [--profiles minimal|dev|ops[,..]]
                   [--features gnu_over_bsd,build_flags,...]
                   [--install brew,asdf,doppler,...]
@@ -71,7 +71,7 @@ GET_BASHED_GIT_SIGNING=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --prefix)
+    --prefix) 
       if [[ $# -lt 2 ]]; then
         echo "Error: --prefix requires a value" >&2
         usage
@@ -554,6 +554,16 @@ mkdir -p "$PREFIX"
 export GET_BASHED_HOME="$PREFIX"
 export GET_BASHED_VIMRC_MODE="$VIMRC_MODE"
 
+copy_tree() {
+  local src="$1" dest="$2"
+  mkdir -p "$dest"
+  if [[ "${FORCE:-0}" -eq 1 ]]; then
+    rsync -a --delete "$src"/ "$dest"/
+  else
+    rsync -a "$src"/ "$dest"/
+  fi
+}
+
 # Copy base assets
 copy_tree "$REPO_DIR/bashrc.d" "$PREFIX/bashrc.d"
 cp -f "$REPO_DIR/bashrc" "$PREFIX/bashrc"
@@ -624,10 +634,10 @@ else
  # shellcheck disable=SC2016
 BASHRC_LINE="# get-bashed: source modular bashrc"
  # shellcheck disable=SC2016
-BASHRC_SNIP='if [[ -r "$HOME/.get-bashed/bashrc" ]]; then source "$HOME/.get-bashed/bashrc"; fi'
+BASHRC_SNIP="if [[ -r \"$PREFIX/bashrc\" ]]; then source \"$PREFIX/bashrc\"; fi"
 BASH_PROFILE_LINE="# get-bashed: source login bash_profile"
  # shellcheck disable=SC2016
-BASH_PROFILE_SNIP='if [[ -r "$HOME/.get-bashed/bash_profile" ]]; then source "$HOME/.get-bashed/bash_profile"; fi'
+BASH_PROFILE_SNIP="if [[ -r \"$PREFIX/bash_profile\" ]]; then source \"$PREFIX/bash_profile\"; fi"
 
   ensure_block "$HOME/.bashrc" "$BASHRC_LINE" "$BASHRC_SNIP"
   ensure_block "$HOME/.bash_profile" "$BASH_PROFILE_LINE" "$BASH_PROFILE_SNIP"
