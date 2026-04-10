@@ -1,8 +1,7 @@
 ---
-title: Docs Index
-updated: 2026-04-09
+title: INDEX.md — get-bashed
+updated: 2026-04-10
 status: current
-domain: technical
 ---
 
 # get-bashed Docs

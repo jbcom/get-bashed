@@ -1,15 +1,12 @@
 ---
-title: Architecture
-updated: 2026-04-09
+title: ARCHITECTURE.md — get-bashed
+updated: 2026-04-10
 status: current
-domain: technical
 ---
 
 # Architecture
 
-## Overview
-
-get-bashed has two layers that operate independently: an **installer** that sets up the environment once, and a **runtime** that runs at every shell startup.
+get-bashed is designed with a strict separation between the **installer** (idempotent setup) and the **runtime** (shell startup logic).
 
 ## Layer 1: Installer
 

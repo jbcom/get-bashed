@@ -1,8 +1,7 @@
 ---
-title: Changelog
-updated: 2026-04-09
+title: CHANGELOG.md — get-bashed
+updated: 2026-04-10
 status: current
-domain: technical
 ---
 
 # Changelog

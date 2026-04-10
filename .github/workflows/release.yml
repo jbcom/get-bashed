@@ -1,21 +1,18 @@
-name: Release Artifacts
+name: Release
+
 on:
   release:
-    types: [ published ]
+    types: [published]
 
 jobs:
-  build:
+  artifacts:
+    name: Upload Release Artifacts
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Package
         run: ./scripts/package.sh dist "${GITHUB_REF_NAME}"
       - name: Upload tarball
-        uses: actions/upload-release-asset@e8f9f06c4b078e705bd2ea027f0926603fc9b4d5  # v1.0.2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@c95fe1489396fe8a9eb87c0abf8ad5bc06adad52 # v6.0.0
         with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: dist/get-bashed-${{ github.ref_name }}.tar.gz
-          asset_name: get-bashed-${{ github.ref_name }}.tar.gz
-          asset_content_type: application/gzip
+          files: dist/get-bashed-${{ github.ref_name }}.tar.gz

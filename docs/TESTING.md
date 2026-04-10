@@ -1,8 +1,7 @@
 ---
-title: Testing
-updated: 2026-04-09
+title: TESTING.md — get-bashed
+updated: 2026-04-10
 status: current
-domain: quality
 ---
 
 # Testing

@@ -1,8 +1,7 @@
 ---
-title: Security Policy
-updated: 2026-04-09
+title: SECURITY.md — get-bashed
+updated: 2026-04-10
 status: current
-domain: technical
 ---
 
 # Security Policy

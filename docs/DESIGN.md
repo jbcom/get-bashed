@@ -1,8 +1,7 @@
 ---
-title: Design
-updated: 2026-04-09
+title: DESIGN.md — get-bashed
+updated: 2026-04-10
 status: current
-domain: product
 ---
 
 # Design

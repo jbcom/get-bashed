@@ -1,8 +1,7 @@
 ---
-title: Contributing
-updated: 2026-04-09
+title: CONTRIBUTING.md — get-bashed
+updated: 2026-04-10
 status: current
-domain: technical
 ---
 
 # Contributing

@@ -1,8 +1,7 @@
 ---
-title: shdoc
-updated: 2026-04-09
+title: SHDOC.md — get-bashed
+updated: 2026-04-10
 status: current
-domain: technical
 ---
 
 # shdoc

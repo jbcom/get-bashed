@@ -1,8 +1,7 @@
 ---
-title: Tools and Language Management
-updated: 2026-04-09
+title: TOOLS.md — get-bashed
+updated: 2026-04-10
 status: current
-domain: technical
 ---
 
 # Tools & Language Management

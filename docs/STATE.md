@@ -1,8 +1,7 @@
 ---
-title: State
-updated: 2026-04-09
+title: STATE.md — get-bashed
+updated: 2026-04-10
 status: current
-domain: context
 ---
 
 # State
