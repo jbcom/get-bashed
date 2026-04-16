@@ -261,10 +261,10 @@ else
   fail "immutable release governance verification or reconciliation is missing"
 fi
 
-if rg -q '^verify-security:' "$REPO_ROOT/Makefile" \
-  && rg -q 'make verify-security' "$REPO_ROOT/README.md" \
-  && rg -q 'make verify-security' "$REPO_ROOT/docs/TESTING.md" \
-  && rg -q 'make verify-security' "$REPO_ROOT/docs/reference/security.md"; then
+if has_regex '^verify-security:' "$REPO_ROOT/Makefile" \
+  && has_regex 'make verify-security' "$REPO_ROOT/README.md" \
+  && has_regex 'make verify-security' "$REPO_ROOT/docs/TESTING.md" \
+  && has_regex 'make verify-security' "$REPO_ROOT/docs/reference/security.md"; then
   pass "security verification is exposed through make and documented"
 else
   fail "security verification target or docs are missing"
