@@ -23,6 +23,23 @@ append_ci_path() {
   fi
 }
 
+find_brew_bin() {
+  local candidate
+
+  if command -v brew >/dev/null 2>&1; then
+    command -v brew
+    return 0
+  fi
+
+  for candidate in /opt/homebrew/bin/brew /usr/local/bin/brew /home/linuxbrew/.linuxbrew/bin/brew; do
+    [[ -x "$candidate" ]] || continue
+    printf '%s\n' "$candidate"
+    return 0
+  done
+
+  return 1
+}
+
 # Prefer RUNNER_TEMP, then RUNNER_TOOL_CACHE, then /tmp
 PREFIX="${GET_BASHED_HOME:-${RUNNER_TEMP:-${RUNNER_TOOL_CACHE:-/tmp}}/get-bashed}"
 export GET_BASHED_HOME="$PREFIX"
@@ -37,8 +54,8 @@ INSTALLS="${1:-shdoc,actionlint,shellcheck,bashate}"
 
 append_ci_path "$GET_BASHED_HOME/bin"
 
-if command -v brew >/dev/null 2>&1; then
-  brew_prefix="$(brew --prefix 2>/dev/null || true)"
+if brew_bin="$(find_brew_bin)"; then
+  brew_prefix="$("$brew_bin" --prefix 2>/dev/null || true)"
   append_ci_path "$brew_prefix/bin"
   append_ci_path "$brew_prefix/sbin"
 fi
