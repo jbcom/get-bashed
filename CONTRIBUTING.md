@@ -36,14 +36,13 @@ pre-commit run --all-files
 ## Tests
 
 ```bash
-./scripts/test-setup.sh
-bats tests
+make test
 ```
 
 ## Docs
 
 ```bash
-./scripts/gen-docs.sh
+make docs
 ```
 
 ## CI
@@ -75,7 +74,7 @@ CI bootstraps tools into `GET_BASHED_HOME` via `scripts/ci-setup.sh`.
 1. Register tools in `installers/tools.sh`.
 2. Use `dependencies` and `optional_dependencies` to express ordering.
 3. Avoid unpinned downloads; prefer package managers when possible.
-4. If a new tool needs a custom handler, add it to `installers/_helpers.sh`.
+4. If a new tool needs a custom handler, expose it via `installers/_helpers.sh` and implement it under `installers/lib/`.
 
 ## Docs Expectations
 
@@ -92,7 +91,7 @@ CI bootstraps tools into `GET_BASHED_HOME` via `scripts/ci-setup.sh`.
 
 ## Conventional Commits
 
-PR titles must follow Conventional Commits, for example `feat: add installer`.
+Conventional Commits are expected for commits and preferred for PR titles, for example `feat: add installer`.
 
 ## Security
 

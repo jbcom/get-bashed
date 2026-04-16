@@ -6,8 +6,33 @@
 
 # Build flags for compiling language runtimes (optional)
 # Enable with GET_BASHED_BUILD_FLAGS=1
-if [[ "${GET_BASHED_BUILD_FLAGS:-0}" == "1" ]] && command -v brew >/dev/null 2>&1; then
-  BREW_PREFIX="$(dirname "$(dirname "$(command -v brew)")")"
+if [[ "${GET_BASHED_BUILD_FLAGS:-0}" == "1" ]] && BREW_PREFIX="$(get_brew_prefix)"; then
+  _join_space_prefix() {
+    local prefix="$1"
+    local current="${2:-}"
+
+    if [[ -n "$prefix" && -n "$current" ]]; then
+      printf '%s %s\n' "$prefix" "$current"
+    elif [[ -n "$prefix" ]]; then
+      printf '%s\n' "$prefix"
+    else
+      printf '%s\n' "$current"
+    fi
+  }
+
+  _join_path_prefix() {
+    local prefix="$1"
+    local current="${2:-}"
+
+    if [[ -n "$prefix" && -n "$current" ]]; then
+      printf '%s:%s\n' "$prefix" "$current"
+    elif [[ -n "$prefix" ]]; then
+      printf '%s\n' "$prefix"
+    else
+      printf '%s\n' "$current"
+    fi
+  }
+
   OPENSSL_PREFIX="$BREW_PREFIX/opt/openssl@3"
   [[ -d "$OPENSSL_PREFIX" ]] || OPENSSL_PREFIX="$BREW_PREFIX/opt/openssl"
   READLINE_PREFIX="$BREW_PREFIX/opt/readline"
@@ -52,10 +77,19 @@ if [[ "${GET_BASHED_BUILD_FLAGS:-0}" == "1" ]] && command -v brew >/dev/null 2>&
     _cpath+="${ZSTD_PREFIX}/include:"
   }
 
-  export LDFLAGS="${_ldflags}${LDFLAGS:-}"
-  export CPPFLAGS="${_cppflags}${CPPFLAGS:-}"
-  export PKG_CONFIG_PATH="${_pkgconfig}${PKG_CONFIG_PATH:-}"
-  export LIBRARY_PATH="${_libpath}${LIBRARY_PATH:-}"
-  export CPATH="${_cpath}${CPATH:-}"
-  export PYTHON_CONFIGURE_OPTS="${_pyopts}${PYTHON_CONFIGURE_OPTS:-}"
+  _ldflags="${_ldflags% }"
+  _cppflags="${_cppflags% }"
+  _pkgconfig="${_pkgconfig%:}"
+  _libpath="${_libpath%:}"
+  _cpath="${_cpath%:}"
+  _pyopts="${_pyopts% }"
+
+  LDFLAGS="$(_join_space_prefix "$_ldflags" "${LDFLAGS:-}")"
+  CPPFLAGS="$(_join_space_prefix "$_cppflags" "${CPPFLAGS:-}")"
+  PKG_CONFIG_PATH="$(_join_path_prefix "$_pkgconfig" "${PKG_CONFIG_PATH:-}")"
+  LIBRARY_PATH="$(_join_path_prefix "$_libpath" "${LIBRARY_PATH:-}")"
+  CPATH="$(_join_path_prefix "$_cpath" "${CPATH:-}")"
+  PYTHON_CONFIGURE_OPTS="$(_join_space_prefix "$_pyopts" "${PYTHON_CONFIGURE_OPTS:-}")"
+
+  export LDFLAGS CPPFLAGS PKG_CONFIG_PATH LIBRARY_PATH CPATH PYTHON_CONFIGURE_OPTS
 fi

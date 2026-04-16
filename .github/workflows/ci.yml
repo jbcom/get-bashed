@@ -6,36 +6,114 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
-jobs:
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: CI setup (get-bashed)
-        run: ./scripts/ci-setup.sh "shellcheck,actionlint,bashate,pre_commit,shdoc"
-      - name: Pre-commit
-        run: ./scripts/pre-commit-ci.sh
+permissions: {}
 
-  tests:
-    name: Tests
-    runs-on: ubuntu-latest
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Quality (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
+        with:
+          enable-cache: true
       - name: CI setup (get-bashed)
-        run: ./scripts/ci-setup.sh "bats"
+        run: ./scripts/ci-setup.sh "bats,shdoc,actionlint,shellcheck,bashate,pre_commit"
       - name: Fetch Bats helpers
         run: ./scripts/test-setup.sh
+      - name: Pre-commit
+        run: pre-commit run --all-files
       - name: Run tests
         run: bats tests
       - name: Verify install wiring
         run: ./scripts/verify-install.sh
+      - name: Generate shell docs
+        run: ./scripts/gen-docs.sh
+      - name: Validate docs surface
+        run: ./scripts/validate-docs.sh
+      - name: Build Sphinx docs and linkcheck
+        run: uvx tox -e docs,docs-linkcheck
+      - name: Verify supply chain posture
+        run: ./scripts/supply_chain_verify.sh
+
+  wsl-quality:
+    name: Quality (wsl-ubuntu)
+    runs-on: windows-2025
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Ensure Ubuntu WSL
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $distro = 'Ubuntu'
+          $installed = @(
+            wsl.exe --list --quiet 2>$null |
+              ForEach-Object { $_.Trim() } |
+              Where-Object { $_ }
+          )
+
+          if (-not ($installed -contains $distro)) {
+            wsl.exe --install --distribution $distro --no-launch --web-download
+          }
+
+          $ready = $false
+          for ($attempt = 0; $attempt -lt 30; $attempt++) {
+            wsl.exe -d $distro --user root --exec true 2>$null
+            if ($LASTEXITCODE -eq 0) {
+              $ready = $true
+              break
+            }
+            Start-Sleep -Seconds 2
+          }
+
+          if (-not $ready) {
+            throw "WSL distro $distro did not become ready"
+          }
+
+          wsl.exe --list --verbose
+      - name: Install WSL base packages
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          wsl.exe -d Ubuntu --user root --exec bash -lc 'export DEBIAN_FRONTEND=noninteractive; apt-get update; apt-get install -y bash ca-certificates curl git make python3 python3-pip python3-venv'
+      - name: Clone repository into WSL workspace
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $distro = 'Ubuntu'
+          $source = (wsl.exe -d $distro --user root --exec wslpath -a $env:GITHUB_WORKSPACE).Trim()
+          $workspace = (wsl.exe -d $distro --user root --exec bash -lc 'workspace="$HOME/get-bashed"; rm -rf "$workspace"; printf "%s" "$workspace"').Trim()
+
+          wsl.exe -d $distro --user root --exec bash -lc "git clone --no-local '$source' '$workspace' && cd '$workspace' && git checkout --force '$env:GITHUB_SHA'"
+
+          Add-Content -Path $env:GITHUB_ENV -Value "WSL_DISTRO=$distro"
+          Add-Content -Path $env:GITHUB_ENV -Value "WSL_WORKSPACE=$workspace"
+      - name: Run WSL quality checks
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          wsl.exe -d $env:WSL_DISTRO --user root --exec bash -lc "cd '$env:WSL_WORKSPACE' && ./scripts/wsl-quality.sh"
 
   sonarqube:
     name: SonarQube Scan
-    needs: [lint, tests]
+    needs: [quality, wsl-quality]
     runs-on: ubuntu-latest
     if: success()
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
