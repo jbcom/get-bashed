@@ -159,6 +159,10 @@ bootstrap_homebrew() {
   rm -rf "$tmpdir"
 }
 
+run_install_command() {
+  "$@" >&2
+}
+
 ensure_modern_bash() {
   brew_bin="$(find_brew_bin 2>/dev/null || true)"
 
@@ -168,23 +172,23 @@ ensure_modern_bash() {
   fi
 
   if [ -n "$brew_bin" ]; then
-    "$brew_bin" install bash
+    run_install_command "$brew_bin" install bash
   elif [ -n "$GET_BASHED_BOOTSTRAP_BREW_URL" ]; then
     bootstrap_homebrew
     brew_bin="$(find_brew_bin 2>/dev/null || true)"
     if [ -z "$brew_bin" ]; then
       fail "Bash 4+ is required, and Homebrew bootstrap did not produce a brew executable."
     fi
-    "$brew_bin" install bash
+    run_install_command "$brew_bin" install bash
   elif command -v apt-get >/dev/null 2>&1; then
-    sudo apt-get update -y
-    sudo apt-get install -y bash
+    run_install_command sudo apt-get update -y
+    run_install_command sudo apt-get install -y bash
   elif command -v dnf >/dev/null 2>&1; then
-    sudo dnf install -y bash
+    run_install_command sudo dnf install -y bash
   elif command -v yum >/dev/null 2>&1; then
-    sudo yum install -y bash
+    run_install_command sudo yum install -y bash
   elif command -v pacman >/dev/null 2>&1; then
-    sudo pacman -Sy --noconfirm bash
+    run_install_command sudo pacman -Sy --noconfirm bash
   else
     fail "Bash 4+ is required but no supported installer was found."
   fi
