@@ -296,7 +296,13 @@ load test_helper
   run grep -F 'append_ci_path "$GET_BASHED_HOME/bin"' scripts/ci-setup.sh
   assert_success
 
-  run grep -F 'brew_prefix="$(brew --prefix 2>/dev/null || true)"' scripts/ci-setup.sh
+  run grep -F 'find_brew_bin()' scripts/ci-setup.sh
+  assert_success
+
+  run grep -F '/home/linuxbrew/.linuxbrew/bin/brew' scripts/ci-setup.sh
+  assert_success
+
+  run grep -F 'brew_prefix="$("$brew_bin" --prefix 2>/dev/null || true)"' scripts/ci-setup.sh
   assert_success
 
   run grep -F 'append_ci_path "$brew_prefix/bin"' scripts/ci-setup.sh
