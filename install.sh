@@ -10,8 +10,10 @@ if [ -r "$BOOTSTRAP_SOURCES_FILE" ]; then
 fi
 
 : "${GET_BASHED_BOOTSTRAP_BREW_URL:=https://raw.githubusercontent.com/Homebrew/install/de0b0bddf1c78731dcd16d953b2f5d29d070e229/install.sh}"
+: "${GET_BASHED_BOOTSTRAP_BREW_SHA256:=dfd5145fe2aa5956a600e35848765273f5798ce6def01bd08ecec088a1268d91}"
 : "${GET_BASHED_BOOTSTRAP_BREW_CMD:=/bin/bash}"
 : "${GET_BASHED_BOOTSTRAP_REPO_ARCHIVE_URL:=https://github.com/jbcom/get-bashed/archive/22eff2b26037a7db4548e3996e587173cf2aa053.tar.gz}"
+: "${GET_BASHED_BOOTSTRAP_REPO_ARCHIVE_SHA256:=87aeecd8e12143ccb019cec367df9923b56977c6730df578384795c0d688a630}"
 
 fail() {
   printf '%s\n' "$*" >&2
@@ -44,13 +46,26 @@ is_modern_bash() {
 
 find_modern_bash() {
   candidates="${GET_BASHED_BOOTSTRAP_BASH_CANDIDATES:-/opt/homebrew/bin/bash /usr/local/bin/bash /home/linuxbrew/.linuxbrew/bin/bash}"
+  had_noglob=0
+  old_ifs=$IFS
 
-  for candidate in $candidates; do
+  case "$-" in
+    *f*) had_noglob=1 ;;
+  esac
+  IFS=' '
+  set -f
+  # shellcheck disable=SC2086
+  set -- $candidates
+  IFS=$old_ifs
+
+  for candidate in "$@"; do
     if is_modern_bash "$candidate"; then
+      [ "$had_noglob" -eq 1 ] || set +f
       printf '%s\n' "$candidate"
       return 0
     fi
   done
+  [ "$had_noglob" -eq 1 ] || set +f
 
   path_bash=""
   if command -v bash >/dev/null 2>&1; then
@@ -66,18 +81,31 @@ find_modern_bash() {
 
 find_brew_bin() {
   candidates="${GET_BASHED_BOOTSTRAP_BREW_CANDIDATES:-/opt/homebrew/bin/brew /usr/local/bin/brew /home/linuxbrew/.linuxbrew/bin/brew}"
+  had_noglob=0
+  old_ifs=$IFS
 
   if command -v brew >/dev/null 2>&1; then
     command -v brew
     return 0
   fi
 
-  for candidate in $candidates; do
+  case "$-" in
+    *f*) had_noglob=1 ;;
+  esac
+  IFS=' '
+  set -f
+  # shellcheck disable=SC2086
+  set -- $candidates
+  IFS=$old_ifs
+
+  for candidate in "$@"; do
     if [ -x "$candidate" ]; then
+      [ "$had_noglob" -eq 1 ] || set +f
       printf '%s\n' "$candidate"
       return 0
     fi
   done
+  [ "$had_noglob" -eq 1 ] || set +f
 
   return 1
 }
@@ -98,6 +126,36 @@ download_bootstrap_asset() {
   return 1
 }
 
+sha256_file() {
+  file="$1"
+
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$file" | awk '{print $1}'
+    return 0
+  fi
+  if command -v shasum >/dev/null 2>&1; then
+    shasum -a 256 "$file" | awk '{print $1}'
+    return 0
+  fi
+  if command -v openssl >/dev/null 2>&1; then
+    openssl dgst -sha256 -r "$file" | awk '{print $1}'
+    return 0
+  fi
+
+  return 1
+}
+
+verify_bootstrap_asset() {
+  file="$1"
+  expected_sha="$2"
+  label="$3"
+
+  [ -n "$expected_sha" ] || return 0
+  actual_sha="$(sha256_file "$file" || true)"
+  [ -n "$actual_sha" ] || fail "Could not verify ${label}: no SHA-256 tool is available."
+  [ "$actual_sha" = "$expected_sha" ] || fail "${label} checksum verification failed."
+}
+
 bootstrap_repo_tree() {
   tmpdir="$(mktemp -d 2>/dev/null || mktemp -d -t get-bashed)"
   archive="$tmpdir/get-bashed.tar.gz"
@@ -108,6 +166,7 @@ bootstrap_repo_tree() {
     rm -rf "$tmpdir"
     fail "Standalone bootstrap requires curl or wget to fetch the get-bashed sources."
   fi
+  verify_bootstrap_asset "$archive" "${GET_BASHED_BOOTSTRAP_REPO_ARCHIVE_SHA256:-}" "get-bashed source archive"
 
   mkdir -p "$extract_dir"
   if ! tar -xzf "$archive" -C "$extract_dir"; then
@@ -149,6 +208,7 @@ bootstrap_homebrew() {
     rm -rf "$tmpdir"
     fail "Homebrew bootstrap requires curl or wget."
   fi
+  verify_bootstrap_asset "$installer" "${GET_BASHED_BOOTSTRAP_BREW_SHA256:-}" "Homebrew installer"
 
   if [ "${CI:-}" = "1" ] || [ ! -t 0 ]; then
     NONINTERACTIVE=1 "$GET_BASHED_BOOTSTRAP_BREW_CMD" "$installer"

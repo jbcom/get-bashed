@@ -20,8 +20,6 @@ if ! command -v gh >/dev/null 2>&1; then
   exit 1
 fi
 
-TARGET_REPO_URL="${TARGET_REPO_URL:-https://x-access-token:${GH_TOKEN}@github.com/${TARGET_REPO}.git}"
-
 resolve_manifest_dir() {
   local candidate="$1"
   if [ -f "$candidate/get-bashed.rb" ] && [ -f "$candidate/get-bashed.json" ]; then
@@ -44,7 +42,11 @@ cleanup() {
 }
 trap cleanup EXIT
 
-git clone "$TARGET_REPO_URL" "$tmpdir/pkgs"
+if [ -n "${TARGET_REPO_URL:-}" ]; then
+  git clone "$TARGET_REPO_URL" "$tmpdir/pkgs"
+else
+  gh repo clone "$TARGET_REPO" "$tmpdir/pkgs"
+fi
 cd "$tmpdir/pkgs"
 
 branch="get-bashed/bump-${VERSION}"

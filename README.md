@@ -51,7 +51,7 @@ If you are working from a checkout instead of a published release, the source-tr
 sh install.sh
 ```
 
-The source-tree bootstrap installs or locates Bash 4+ automatically before handing off to the full installer. When the repo-root `install.sh` is run as a standalone downloaded file, it fetches the repo tree pinned to that bootstrap revision before execing `install.bash`. On a fresh macOS machine without Homebrew, it bootstraps Homebrew from the repo-pinned installer first and then installs Bash through Homebrew.
+The source-tree bootstrap installs or locates Bash 4+ automatically before handing off to the full installer. When the repo-root `install.sh` is run as a standalone downloaded file, it fetches the repo tree pinned to that bootstrap revision, verifies the pinned archive checksum, and then execs `install.bash`. On a fresh macOS machine without Homebrew, it bootstraps Homebrew from the repo-pinned installer, verifies that installer checksum, and then installs Bash through Homebrew.
 
 To symlink shell dotfiles and set git identity:
 
@@ -162,7 +162,7 @@ Package-manager install paths:
 
 ## Runtime and secrets
 
-Modules in `bashrc.d/` load in numeric order. Local secrets live in `~/.get-bashed/secrets.d/*.sh` and are sourced by `bashrc.d/99-secrets.sh`.
+Modules in `bashrc.d/` load in numeric order. Local secrets live in `~/.get-bashed/secrets.d/*.sh` and are sourced by `bashrc.d/99-secrets.sh` only when those files use owner-only permissions.
 
 Doppler is explicit only: enabling `doppler_env` exposes `doppler_shell`, but startup never fetches or injects Doppler secrets automatically.
 
@@ -199,7 +199,7 @@ make smoke-release
 make release-validate
 ```
 
-`make lint` uses the same bootstrap path as CI. `make test` bootstraps `bats`, fetches pinned BATS helpers, and runs install verification. `make docs` bootstraps both `shdoc` and `uv`, regenerates installer docs, validates the docs contract, and builds the Sphinx site. `make docs-check` adds Sphinx link checking so outbound docs links are exercised locally and in CI. `make verify-security` runs the checked-in supply-chain verifier across workflow pinning, explicit top-level workflow permission lockdown, pinned download sources, repo-owned CodeQL/Scorecard presence, draft-first release publication wiring, docs link validation wiring, immutable-release governance, and branch-protection verification availability. `make package-release`, `make smoke-release`, and `make release-validate` exercise the checked-in release pipeline locally, including the docs installer fallback downloader path.
+`make lint` uses the same bootstrap path as CI. `make test` bootstraps `bats`, fetches pinned BATS helpers, and runs install verification. `make docs` bootstraps both `shdoc` and `uv`, regenerates installer docs, validates the docs contract, and builds the Sphinx site. `make docs-check` adds Sphinx link checking so outbound docs links are exercised locally and in CI. `make verify-security` runs the checked-in supply-chain verifier across workflow pinning, explicit top-level workflow permission lockdown, pinned download sources, repo-owned CodeQL/Scorecard presence, draft-first release publication wiring, docs link validation wiring, immutable-release governance, and branch-protection verification availability. `make package-release`, `make smoke-release`, and `make release-validate` exercise the checked-in release pipeline locally, while the release-pipeline BATS suite also forces the docs installer through its supported `wget` fallback path.
 The shared bootstrap disables Homebrew auto-update during these tool installs so local runs and CI stay deterministic.
 `make verify-branch-protection` is the authenticated governance check for the live `main` branch policy; it verifies the exact required CI contexts plus the enforced review, code owner, and branch-safety settings instead of relying on stale prose about workflow files. Once `.github/workflows/codeql.yml` lands on `main`, it also expects `CodeQL (actions)` and `CodeQL (python)` to become required branch checks.
 `make reconcile-codeql-governance` is the one-time post-merge cutover for that transition: it retires GitHub default CodeQL setup and patches the live required status-check list to include the repo-owned CodeQL jobs after `codeql.yml` is on `main`.

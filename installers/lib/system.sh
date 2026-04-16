@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 # @internal
 _using_asdf() { command -v asdf >/dev/null 2>&1; }
 

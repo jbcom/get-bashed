@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 # @description Run a command with auto-approval when configured.
 # @arg $1 string Command name.
 # @arg $2 string Optional flag to auto-approve (e.g., -y, --noconfirm).

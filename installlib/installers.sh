@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 get_deps() {
   local id="$1"
   local deps opt flag dep

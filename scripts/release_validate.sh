@@ -28,8 +28,7 @@ PY
 
 wait_for_http() {
   local url="$1"
-  local attempt
-  for attempt in $(seq 1 50); do
+  for _ in $(seq 1 50); do
     if "$PYTHON_BIN" - "$url" <<'PY' >/dev/null 2>&1
 from urllib.request import urlopen
 import sys
@@ -107,39 +106,6 @@ PY
   test -f "$destination/get-bashed.ps1"
 }
 
-install_fake_wget() {
-  local bindir="$1"
-  local python_bin="$2"
-
-  cat >"$bindir/fake_wget.py" <<'PY'
-from pathlib import Path
-from urllib.request import urlopen
-import sys
-
-argv = sys.argv[1:]
-if len(argv) == 2 and argv[0] == "-qO-":
-    with urlopen(argv[1], timeout=10) as response:
-        sys.stdout.buffer.write(response.read())
-    raise SystemExit(0)
-
-if len(argv) == 3 and argv[0] == "-qO":
-    target = Path(argv[1])
-    target.parent.mkdir(parents=True, exist_ok=True)
-    with urlopen(argv[2], timeout=10) as response:
-        target.write_bytes(response.read())
-    raise SystemExit(0)
-
-raise SystemExit(f"unsupported fake wget arguments: {' '.join(argv)}")
-PY
-
-  cat >"$bindir/wget" <<EOF
-#!/bin/sh
-set -eu
-exec "$python_bin" "$bindir/fake_wget.py" "\$@"
-EOF
-  chmod +x "$bindir/wget"
-}
-
 verify_checksum() {
   local archive="$1"
   if command -v sha256sum >/dev/null 2>&1; then
@@ -191,7 +157,6 @@ latest_home="$(mktemp -d)"
 brew_stage="$(mktemp -d)"
 brew_prefix="$(mktemp -d)"
 windows_stage="$(mktemp -d)"
-wget_bin="$(mktemp -d)"
 server_log="$DIST_DIR/http-server.log"
 port="$(pick_port)"
 cleanup() {
@@ -200,21 +165,21 @@ cleanup() {
   rm -rf "$brew_stage"
   rm -rf "$brew_prefix"
   rm -rf "$windows_stage"
-  rm -rf "$wget_bin"
   kill "${server_pid:-0}" 2>/dev/null || true
 }
 trap cleanup EXIT
 
-"$PYTHON_BIN" -m http.server "$port" --directory "$DIST_DIR" >"$server_log" 2>&1 &
-server_pid=$!
-wait_for_http "http://127.0.0.1:${port}/checksums.txt"
-
 mkdir -p "$install_home/home"
 mkdir -p "$latest_home/home"
-install_fake_wget "$wget_bin" "$PYTHON_BIN"
 cat >"$DIST_DIR/latest.json" <<EOF
 {"tag_name":"v${VERSION}"}
 EOF
+
+"$PYTHON_BIN" -m http.server "$port" --directory "$DIST_DIR" >"$server_log" 2>&1 &
+server_pid=$!
+wait_for_http "http://127.0.0.1:${port}/checksums.txt"
+wait_for_http "http://127.0.0.1:${port}/${UNIX_ARCHIVE}"
+wait_for_http "http://127.0.0.1:${port}/latest.json"
 
 HOME="$install_home/home" \
 GET_BASHED_RELEASE_BASE_URL="http://127.0.0.1:${port}" \
@@ -224,8 +189,6 @@ GET_BASHED_RELEASE_CHECKSUMS_URL="http://127.0.0.1:${port}/checksums.txt" \
 test -f "$install_home/home/.get-bashed/get-bashedrc.sh"
 
 HOME="$latest_home/home" \
-PATH="$wget_bin:$PATH" \
-GET_BASHED_DOWNLOAD_TOOL="wget" \
 GET_BASHED_RELEASE_METADATA_URL="http://127.0.0.1:${port}/latest.json" \
 GET_BASHED_RELEASE_BASE_URL="http://127.0.0.1:${port}" \
 GET_BASHED_RELEASE_CHECKSUMS_URL="http://127.0.0.1:${port}/checksums.txt" \

@@ -8,7 +8,7 @@ status: current
 
 `get-bashed` is intentionally pinned at every external boundary that it controls:
 
-- bootstrap Homebrew download sources live in `installers/bootstrap_sources.sh`
+- bootstrap Homebrew download sources and SHA-256 checksums live in `installers/bootstrap_sources.sh`
 - git and curl fallbacks live in `installers/sources.sh`
 - `asdf` default runtime versions are pinned in `installers/sources.sh`
 - release packaging is driven by checked-in scripts rather than ad hoc archive commands

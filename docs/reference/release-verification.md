@@ -24,7 +24,7 @@ make release-validate
 
 `make smoke-release` checks the Unix installer path plus the Windows wrapper bundle structure.
 
-`make release-validate` verifies the archive checksums, generated package manifests, and the docs-site `install.sh` path against a local HTTP server backed by the built artifacts. That validation now exercises both the default downloader path and the supported `wget` fallback path so the documented downloader surface stays real.
+`make release-validate` verifies the archive checksums, generated package manifests, and the docs-site `install.sh` path against a local HTTP server backed by the built artifacts. The release-pipeline BATS suite separately forces the installer through the supported `wget` fallback path so the documented downloader surface stays real without making the checked-in release validator depend on a downloader shim.
 The checked-in GitHub workflow follows the same draft-first order GitHub recommends for immutable releases: create a draft, attach the validated assets, then publish it.
 
 ## Verify A Published Release

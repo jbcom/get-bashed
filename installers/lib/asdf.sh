@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 # @description Check if an asdf plugin is installed.
 # @arg $1 string Plugin name.
 # @exitcode 0 If installed.

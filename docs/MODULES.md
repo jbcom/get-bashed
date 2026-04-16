@@ -24,10 +24,10 @@ This document is maintained manually because the runtime modules are better desc
 | `80-aliases` | Common aliases | none | aliases only |
 | `90-functions` | Shell helper functions | none | defines functions only |
 | `95-ssh-agent` | Optional ssh-agent bootstrap | `GET_BASHED_SSH_AGENT` | starts/reuses ssh-agent |
-| `99-secrets` | Local secrets snippets | none | sources `~/.get-bashed/secrets.d/*.sh` |
+| `99-secrets` | Local secrets snippets | none | sources owner-only `~/.get-bashed/secrets.d/*.sh` |
 
 ## Notes
 
-- The only secret-loading path is `99-secrets`.
+- The only secret-loading path is `99-secrets`, and it skips secret files that are readable by group or other users.
 - `doppler_env` does not inject secrets at startup.
 - `auto_tools` remains opt-in, intentionally narrow, and checks pinned npm package state before installing.

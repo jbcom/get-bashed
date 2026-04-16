@@ -1,3 +1,7 @@
+#!/usr/bin/env bash
+
+# shellcheck disable=SC2153
+
 # @description Apply a built-in profile.
 # @arg $1 string Profile name.
 # @exitcode 0 If applied.
