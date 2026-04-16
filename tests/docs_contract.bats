@@ -19,7 +19,7 @@ load test_helper
 }
 
 @test "documentation references only current workflow files" {
-  run rg -n "docs.yml|pr-title.yml|release-please.yml|autofix.yml|dependabot-automerge.yml" README.md AGENTS.md STANDARDS.md docs
+  run repo_search "docs.yml|pr-title.yml|release-please.yml|autofix.yml|dependabot-automerge.yml" README.md AGENTS.md STANDARDS.md docs
   assert_failure
 
   run grep -F "cd.yml" README.md
@@ -43,7 +43,7 @@ load test_helper
   run grep -F 'wsl.exe --install --distribution $distro --no-launch --web-download' .github/workflows/ci.yml
   assert_success
 
-  run rg -n 'rather than dedicated runner validation|Linux-compatible path rather than a dedicated WSL runner' README.md AGENTS.md docs
+  run repo_search 'rather than dedicated runner validation|Linux-compatible path rather than a dedicated WSL runner' README.md AGENTS.md docs
   assert_failure
 }
 
@@ -197,7 +197,7 @@ load test_helper
   run grep -F 'workflow_dispatch' .github/workflows/release.yml
   assert_success
 
-  run rg -n 'types: \[published\]' .github/workflows/release.yml
+  run repo_search 'types: \[published\]' .github/workflows/release.yml
   assert_failure
 
   run grep -F 'gh attestation verify "$WINDOWS_ARCHIVE"' scripts/verify_published_release.sh
@@ -225,20 +225,20 @@ load test_helper
 }
 
 @test "installer code does not resolve asdf latest at runtime" {
-  run rg -n 'asdf (latest|install .+ latest)' installers installlib bin scripts
+  run repo_search 'asdf (latest|install .+ latest)' installers installlib bin scripts
   assert_failure
 }
 
 @test "curl fallbacks are pinned instead of using moving HEAD URLs" {
-  run rg -n 'raw\\.githubusercontent\\.com/.+/HEAD/' installers scripts README.md TOOLS.md docs AGENTS.md --glob '!scripts/supply_chain_verify.sh'
+  run repo_search 'raw\\.githubusercontent\\.com/.+/HEAD/' installers scripts README.md TOOLS.md docs AGENTS.md --exclude 'scripts/supply_chain_verify.sh'
   assert_failure
 }
 
 @test "runtime and pipx helpers do not use floating package specs" {
-  run rg -n 'npm install -g (@google/gemini-cli|@sonar/scan)([[:space:]]|$)' bashrc.d
+  run repo_search 'npm install -g (@google/gemini-cli|@sonar/scan)([[:space:]]|$)' bashrc.d
   assert_failure
 
-  run rg -n 'pipx install \"\\$pkg\"|python3 -m pip install --user \"\\$(id|pkg)\"' installers
+  run repo_search 'pipx install \"\\$pkg\"|python3 -m pip install --user \"\\$(id|pkg)\"' installers
   assert_failure
 }
 
@@ -272,7 +272,7 @@ load test_helper
 }
 
 @test "tests do not hardcode a macOS-only bash path in commands" {
-  run rg -n '/opt/homebrew/bin/bash' tests --glob '!test_helper.bash' --glob '!docs_contract.bats'
+  run repo_search '/opt/homebrew/bin/bash' tests --exclude 'test_helper.bash' --exclude 'docs_contract.bats'
   assert_failure
 }
 
@@ -292,22 +292,33 @@ load test_helper
   assert_success
 }
 
+@test "ci setup persists tool bins for later workflow steps" {
+  run grep -F 'append_ci_path "$GET_BASHED_HOME/bin"' scripts/ci-setup.sh
+  assert_success
+
+  run grep -F 'brew_prefix="$(brew --prefix 2>/dev/null || true)"' scripts/ci-setup.sh
+  assert_success
+
+  run grep -F 'append_ci_path "$brew_prefix/bin"' scripts/ci-setup.sh
+  assert_success
+}
+
 @test "runtime modules resolve Homebrew state through brew --prefix" {
-  run rg -n 'dirname "\\$\\(dirname "\\$\\(command -v brew\\)\\)"|/opt/homebrew/etc/profile\\.d/bash_completion\\.sh|/usr/local/etc/profile\\.d/bash_completion\\.sh|/opt/homebrew/opt/asdf/libexec/asdf\\.sh|/usr/local/opt/asdf/libexec/asdf\\.sh' bashrc.d
+  run repo_search 'dirname "\\$\\(dirname "\\$\\(command -v brew\\)\\)"|/opt/homebrew/etc/profile\\.d/bash_completion\\.sh|/usr/local/etc/profile\\.d/bash_completion\\.sh|/opt/homebrew/opt/asdf/libexec/asdf\\.sh|/usr/local/opt/asdf/libexec/asdf\\.sh' bashrc.d
   assert_failure
 
   run grep -F 'prefix="$("$brew_bin" --prefix 2>/dev/null || true)"' bashrc.d/10-helpers.sh
   assert_success
 
-  run rg -n 'get_brew_prefix' bashrc.d/20-path.sh bashrc.d/30-buildflags.sh bashrc.d/40-completions.sh bashrc.d/60-asdf.sh
+  run repo_search 'get_brew_prefix' bashrc.d/20-path.sh bashrc.d/30-buildflags.sh bashrc.d/40-completions.sh bashrc.d/60-asdf.sh
   assert_success
 }
 
 @test "bash_profile uses brew shellenv instead of hand-rolled exports" {
-  run rg -n 'brew shellenv' bash_profile
+  run repo_search 'brew shellenv' bash_profile
   assert_success
 
-  run rg -n 'HOMEBREW_CELLAR=.*Cellar|dirname "\\$\\(dirname "\\$\\(command -v brew\\)\\)"' bash_profile
+  run repo_search 'HOMEBREW_CELLAR=.*Cellar|dirname "\\$\\(dirname "\\$\\(command -v brew\\)\\)"' bash_profile
   assert_failure
 }
 
@@ -321,6 +332,6 @@ load test_helper
   run grep -F 'GET_BASHED_CURL_CMD["brew"]="${GET_BASHED_BOOTSTRAP_BREW_CMD}"' installers/sources.sh
   assert_success
 
-  run rg -n 'archive/refs/heads/main\\.tar\\.gz|archive/refs/heads/.+\\.tar\\.gz' install.sh installers/bootstrap_sources.sh README.md docs
+  run repo_search 'archive/refs/heads/main\\.tar\\.gz|archive/refs/heads/.+\\.tar\\.gz' install.sh installers/bootstrap_sources.sh README.md docs
   assert_failure
 }
