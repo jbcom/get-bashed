@@ -99,13 +99,16 @@ load test_helper
   run test -f scripts/supply_chain_verify.sh
   assert_success
 
+  run test -x scripts/supply_chain_verify.sh
+  assert_success
+
   run grep -F 'verify-security:' Makefile
   assert_success
 
   run grep -F 'make verify-security' README.md docs/README.md docs/TESTING.md docs/reference/testing.md docs/reference/security.md
   assert_success
 
-  run grep -F './scripts/supply_chain_verify.sh' .github/workflows/ci.yml
+  run grep -F 'bash ./scripts/supply_chain_verify.sh' .github/workflows/ci.yml
   assert_success
 }
 
