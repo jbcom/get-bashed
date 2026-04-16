@@ -1,52 +1,40 @@
 ---
 title: STATE.md — get-bashed
-updated: 2026-04-10
+updated: 2026-04-15
 status: current
 ---
 
 # State
 
-Current state and roadmap for the get-bashed project.
+## Current phase
 
-## Beta Milestone Reached
-The project has achieved functional stability across the core installer and runtime layers. Idempotent wiring and cross-platform package management are verified.
+get-bashed is in production-hardening mode. The installer/runtime split is stable, and the current focus is on keeping the documented contract, CI behavior, and runtime behavior consistent across macOS, Linux, and WSL.
 
-## What is done
+## Completed
 
-### Installer Core
-- **POSIX Bootstrap**: `install.sh` handles initial environment probing and Bash acquisition.
-- **Bash Installer**: `install.bash` provides full profile/feature resolution and config generation.
-- **Idempotent Wiring**: Dotfiles are copied into `~/.get-bashed` with automated backups, then optionally symlinked into `$HOME` or sourced via snippets injected into shell profiles.
-- **Dependency Registry**: Depth-first resolution with circular dependency detection.
-- **Git Identity**: Integrated identity prompts and `gitconfig` template application.
+- Modern Bash bootstrap from `install.sh`
+- Docs-site release installer at `/install.sh`
+- Managed install prefix under `~/.get-bashed`
+- Ordered runtime module loading
+- Centralized tool registry and dependency resolution
+- Pinned `asdf` default versions for built-in language installers
+- Generated installer/helper API docs plus a generated installer catalog
+- Matrix CI across Ubuntu and macOS for lint, tests, install verification, docs generation, and docs build
+- Dedicated Ubuntu-under-WSL validation on `windows-2025` for lint, tests, and install verification
+- Checked-in release bundle packaging, release validation, published-release verification, and generated package manifests for `jbcom/pkgs`
 
-### Runtime Modules
-- **Ordered Loading**: Modular `bashrc.d/` structure (00-99).
-- **Environment Management**: Robust PATH construction and Homebrew build flag injection.
-- **Tool Integration**: Starship, direnv, and asdf version manager activation.
-- **Secrets Protocol**: Isolated `secrets.d/` sourcing (git-ignored).
+## Active priorities
 
-### CI/CD & Automation
-- **Standardized Workflows**: Four-workflow pattern (CI, CD, Release, Automerge).
-- **Security Gates**: Secret scanning (gitleaks) and workflow linting (actionlint).
-- **Quality Gates**: BATS test suite and install verification on clean prefixes.
+- Keep docs and code in lockstep
+- Preserve unknown user-owned files during forceful reinstalls
+- Pin external installer refs where feasible
+- Keep pinned runtime defaults and test helper SHAs in the shared manifest
+- Verify fallback download integrity when package managers are unavailable
+- Realign managed git-backed installs to pinned refs on rerun
+- Expand behavior-level tests for runtime modules and installer semantics
+- Keep the docs/release/package-manager surface aligned as the release workflow evolves
 
-## Active Context
-- **Refinement Phase**: Transitioning from functional completion to documentation and standard alignment.
-- **Dogfooding**: Verifying local install stability after recent structural changes (symlink-only dotfiles).
+## Remaining risk areas
 
-## Recent Changes
-- **Standardized Documentation**: Aligned all `.md` files with brand-aware headers and professional tone.
-- **Workflow Consolidation**: Moved to the tight four-workflow pattern with pinned SHAs.
-- **Release Please Config**: Standardized `release-please-config.json` (unhidden) alongside existing manifest.
-- **Doc Index Protection**: Updated `gen-docs.sh` to preserve frontmatter in generated indices.
-
-## What is next
-- **Extended Test Coverage**: Expand BATS to cover runtime module behavior and flag side effects.
-- **Profile Auditing**: Fine-tune default toolsets for `minimal`, `dev`, and `ops` profiles.
-- **UX Polishing**: Improve the interactive `dialog` UI for more intuitive feature selection.
-
-## Known issues
-- `shdoc` is not available via standard package managers on macOS; requires local source build in CI.
-- Runtime module `bashrc.d/` shdoc coverage is sparse; needs manual annotation pass.
-- BATS helper libraries require periodic SHA auditing to stay secure.
+- Optional startup behaviors such as `auto_tools` are now pinned, gated on tool availability, and avoid reinstalling already-present pinned npm packages, but still need periodic review for performance and predictability
+- Pinned sources and runtime defaults still need periodic refresh as upstream projects release updates

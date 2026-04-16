@@ -1,151 +1,62 @@
 ---
 title: AGENTS.md — get-bashed
-updated: 2026-04-10
+updated: 2026-04-15
 status: current
 ---
 
 # get-bashed — Extended AI Protocols
 
-This file extends CLAUDE.md with architecture detail, patterns, and operational protocols for AI agents working in this repository.
+This file extends `CLAUDE.md` with repository-specific architecture and operational expectations for agents.
 
-## Architecture Overview
+## Architecture overview
 
-get-bashed has two distinct layers: the installer and the runtime.
+get-bashed has two layers:
 
-### Installer Layer
+### Installer layer
 
-`install.sh` is a POSIX-only bootstrap that locates or installs bash, then re-execs `install.bash`. `install.bash` is the full installer written in Bash 4+. It:
+- `install.sh` is POSIX `sh` only.
+- It locates or installs Bash 4+ and then execs `install.bash`.
+- `docs/public/install.sh` is the release-surface bootstrap served from the docs site root; it downloads a published bundle and then execs the bundled `install.sh`.
+- `install.bash` is a small orchestrator that sources `installlib/*.sh` for argument parsing, profile/feature resolution, interactive UI, managed-file sync, config generation, and installer execution.
 
-1. Parses CLI arguments for profiles, features, and installer lists.
-2. Applies profiles (which set feature flag defaults).
-3. Applies feature flag overrides.
-4. Copies dotfiles and `bashrc.d/` to `PREFIX` (default `~/.get-bashed`).
-5. Writes a generated config file `get-bashedrc.sh` encoding the resolved flags.
-6. Optionally links dotfiles from `$HOME` to `~/.get-bashed` with backup.
-7. Runs selected tool installers in dependency order.
+### Runtime layer
 
-### Runtime Layer
+- `bashrc` is the interactive entrypoint.
+- `bash_profile` is the login entrypoint and delegates to `bashrc`.
+- `bashrc.d/` contains ordered modules. Local secrets live in `~/.get-bashed/secrets.d`.
 
-`bashrc` is sourced by the user's `~/.bashrc`. It reads `get-bashedrc.sh` (the generated config), then sources all files in `bashrc.d/` matching `[0-9][0-9]-*.sh` in sorted order.
+### Installer helpers
 
-`bash_profile` handles login shells: initializes Homebrew shellenv, then delegates to `bashrc`.
+- `installers/tools.sh` is the tool registry.
+- `installers/sources.sh` is the shared pinned manifest for git/curl fallbacks, BATS helper refs, and built-in `asdf` runtime defaults.
+- `installers/_helpers.sh` sources `installers/lib/*.sh`, which contain the helper implementations.
+- Release packaging lives under `scripts/build_release_artifact.sh`, `scripts/release_validate.sh`, `scripts/publish_draft_release.sh`, `scripts/generate_pkg_manifests.sh`, and `scripts/publish_pkg_pr.sh`.
+- Branch-protection verification lives in `scripts/verify_branch_protection.sh`.
+- Supply-chain verification lives in `scripts/supply_chain_verify.sh`.
 
-### Tool Registry
+## Product contract
 
-`installers/tools.sh` is the single source of truth for all installable tools. Each tool is declared with:
+- The docs are the contract. When behavior and docs drift, prefer fixing behavior unless the current behavior is intentionally safer.
+- `--dry-run` is zero-write.
+- `--force` may remove stale repo-managed assets, but must never delete unknown user-owned files under the managed prefix.
+- `doppler_env` is explicit integration only. Startup never auto-fetches Doppler secrets.
+- `asdf` must work for both Homebrew and git installs.
 
-- `tool_register id desc deps platforms methods`
-- `tool_pkgs id brew apt dnf yum pacman` (package names per manager)
-- `tool_git id url` / `tool_curl id url cmd` (alternative sources)
-- `tool_handler id fn` (custom installation function)
-- `tool_opt_deps id "FLAG:dep,..."` (optional deps gated by feature flags)
-
-`installers/_helpers.sh` contains platform detection helpers and all custom handler functions (`install_asdf`, `install_vimrc`, `install_shdoc`, `install_actionlint`, etc.).
-
-### Config System
-
-The installer writes `~/.get-bashed/get-bashedrc.sh` encoding:
-
-| Variable | Meaning |
-|---|---|
-| `GET_BASHED_GNU` | Prefer GNU tools over BSD on macOS |
-| `GET_BASHED_BUILD_FLAGS` | Export Homebrew build flags (CPPFLAGS, LDFLAGS, etc.) |
-| `GET_BASHED_AUTO_TOOLS` | Auto-install optional CLIs |
-| `GET_BASHED_SSH_AGENT` | Auto-start ssh-agent |
-| `GET_BASHED_USE_DOPPLER` | Enable Doppler env injection |
-| `GET_BASHED_USE_BASH_IT` | Enable bash-it framework |
-| `GET_BASHED_GIT_SIGNING` | Enable GPG git signing |
-| `GET_BASHED_VIMRC_MODE` | `awesome` or `basic` vimrc flavor |
-
-Runtime modules read these flags and conditionally enable behavior.
-
-### Profiles
-
-Profiles live in `profiles/*.env`. Each defines `FEATURES` and `INSTALLS` values. Built-in profiles:
-
-- `minimal`: all flags off, no tools.
-- `dev`: GNU tools, build flags, auto tools. Installs dev CLI bundle.
-- `ops`: dev plus SSH agent, Doppler, kubectl, helm, stern, terraform, awscli.
-
-CLI `--features` and `--install` always override profile defaults.
-
-### Module Load Order
-
-| Range | Purpose |
-|---|---|
-| `00-` | Shell options, history, editor |
-| `10-` | Shared helper functions |
-| `20-` | PATH construction |
-| `30-` | Build flags (conditional on `GET_BASHED_BUILD_FLAGS`) |
-| `40-` | Shell completions |
-| `50-` | Tool init (starship, direnv, cargo) |
-| `60-` | asdf version manager activation |
-| `65-` | Optional CLI tools |
-| `66-` | Doppler env integration |
-| `70-` | Aliases and env vars; bash-it init |
-| `80-` | Extended aliases |
-| `90-` | Shell functions |
-| `95-` | SSH agent management |
-| `99-` | Secrets sourcing from `secrets.d/` |
-
-## Key Design Constraints
-
-- `install.sh` must remain POSIX sh-compatible (no bashisms).
-- `install.bash` requires Bash 4+ (enforced at runtime with `BASH_VERSINFO` check).
-- All `bashrc.d/` modules must tolerate being sourced multiple times (idempotent).
-- No module may hard-code a user's home directory or username.
-- Tool installers prefer package managers over raw curl/git when available.
-- Optional dependencies are gated by feature flags, not hard-wired.
-
-## Data Flow
-
-```
-User runs install.sh
-  └─> install.bash resolves profiles + features
-      └─> copies bashrc.d/, dotfiles to ~/.get-bashed/
-      └─> writes ~/.get-bashed/get-bashedrc.sh
-      └─> runs tool installers (dependency order)
-      └─> optionally symlinks ~/.bashrc -> ~/.get-bashed/bashrc
-
-Shell startup
-  └─> ~/.bashrc sources ~/.get-bashed/bashrc
-      └─> sources get-bashedrc.sh (config)
-      └─> sources bash_aliases
-      └─> iterates bashrc.d/[0-9][0-9]-*.sh in order
-          └─> each module reads GET_BASHED_* flags as needed
-```
-
-## Docs Pipeline
-
-`scripts/gen-docs.sh` uses shdoc to generate `docs/INSTALLER.md`, `docs/INSTALLERS_HELPERS.md`, `docs/INSTALLERS.md`, and `docs/MODULES.md` from shell script annotations. It then regenerates `docs/INDEX.md`.
-
-Run after any change to installer or module functions.
-
-## CI Workflows
+## Workflow map
 
 | Workflow | Trigger | Purpose |
 |---|---|---|
-| `ci.yml` | PR + push main | Lint (pre-commit), BATS tests, install verification |
-| `docs.yml` | PR + push main | Build and publish docs to GitHub Pages |
-| `pr-title.yml` | PR | Enforce Conventional Commits title format |
-| `release-please.yml` | push main | Auto-manage release PRs and CHANGELOG |
-| `release.yml` | version tag | Build release artifacts |
-| `autofix.yml` | PR | Auto-apply fixable lint issues |
-| `dependabot-automerge.yml` | Dependabot PR | Auto-merge minor/patch dependency updates |
+| `ci.yml` | PR + push main | Ubuntu/macOS matrix quality job plus dedicated Ubuntu-under-WSL validation on `windows-2025` |
+| `codeql.yml` | PR + push main + weekly schedule | Repo-owned advanced CodeQL analysis for `actions` and `python` |
+| `cd.yml` | push main | Release Please, draft-first release publication, and docs build/GitHub Pages deploy |
+| `release.yml` | manual dispatch | Manual recovery path for the checked-in draft-first release pipeline |
+| `scorecard.yml` | push main + weekly schedule | Run OpenSSF Scorecard with the isolated permissions it needs for published results |
+| `automerge.yml` | Dependabot and labeled PR events | Auto-merge approved dependency bumps |
 
-## Testing Approach
+## Agent rules
 
-Tests use BATS with pinned helper libraries (bats-support, bats-assert, bats-file). Each test runs the installer in an isolated temp `HOME` directory to prevent side effects on the host machine.
-
-`scripts/test-setup.sh` fetches helper libraries at pinned SHAs. Do not change these without auditing the new commits.
-
-## Security Surfaces
-
-Changes to any of the following require extra scrutiny:
-
-- `install.sh`, `install.bash`, `installers/` — arbitrary code execution during install
-- `bashrc.d/99-secrets.sh` — sources everything in `secrets.d/`
-- PATH construction (`bashrc.d/20-path.sh`) — ordering matters
-- Any `curl`/`git` download — must be from trusted sources
-
-See `SECURITY.md` for the full threat model and reporting guidance.
+- Keep `install.sh` POSIX compatible.
+- Keep every runtime module idempotent.
+- Do not add secret-provider auto-sourcing on shell startup.
+- Prefer updating generated docs through `scripts/gen-docs.sh` rather than hand-editing generated files.
+- Treat installer, PATH, secrets, and external download changes as security-sensitive.

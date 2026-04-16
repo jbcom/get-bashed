@@ -15,13 +15,13 @@ path_add "$HOME/.cargo/bin"
 export GOBIN="${GOBIN:-$HOME/go/bin}"
 path_add "$GOBIN"
 
-# Optional: ASDF shims
+# Optional: ASDF
+path_add "$HOME/.asdf/bin"
 path_add "$HOME/.asdf/shims"
 
 # Optional: prefer GNU tools on macOS (requires Homebrew coreutils, gnu-sed, etc.)
 # Set GET_BASHED_GNU=1 to enable.
-if [[ "${GET_BASHED_GNU:-0}" == "1" ]] && command -v brew >/dev/null 2>&1; then
-  BREW_PREFIX="$(dirname "$(dirname "$(command -v brew)")")"
+if [[ "${GET_BASHED_GNU:-0}" == "1" ]] && BREW_PREFIX="$(get_brew_prefix)"; then
   path_add "$BREW_PREFIX/opt/coreutils/libexec/gnubin"
   path_add "$BREW_PREFIX/opt/findutils/libexec/gnubin"
   path_add "$BREW_PREFIX/opt/gnu-sed/libexec/gnubin"

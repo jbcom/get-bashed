@@ -11,7 +11,7 @@ load test_helper
   USER_NAME="Jane Doe"
   USER_EMAIL="jane@example.com"
 
-  HOME="$TEST_HOME" bash ./install.sh --auto --link-dotfiles --name "$USER_NAME" --email "$USER_EMAIL" --prefix "$TEST_HOME/.get-bashed" --force
+  HOME="$TEST_HOME" ./install.sh --auto --link-dotfiles --name "$USER_NAME" --email "$USER_EMAIL" --prefix "$TEST_HOME/.get-bashed" --force
 
   run test -L "$TEST_HOME/.bashrc"
   assert_success
@@ -39,7 +39,7 @@ load test_helper
   TEST_HOME="$HOME"
   echo "legacy" > "$HOME/.bashrc"
 
-  HOME="$TEST_HOME" bash ./install.sh --auto --link-dotfiles --prefix "$TEST_HOME/.get-bashed" --force
+  HOME="$TEST_HOME" ./install.sh --auto --link-dotfiles --prefix "$TEST_HOME/.get-bashed" --force
 
   run test -L "$TEST_HOME/.bashrc"
   assert_success
@@ -57,7 +57,7 @@ load test_helper
   echo "legacy" > "$TEST_HOME/other/.bashrc"
   ln -s "$TEST_HOME/other/.bashrc" "$TEST_HOME/.bashrc"
 
-  HOME="$TEST_HOME" bash ./install.sh --auto --link-dotfiles --prefix "$TEST_HOME/.get-bashed" --force
+  HOME="$TEST_HOME" ./install.sh --auto --link-dotfiles --prefix "$TEST_HOME/.get-bashed" --force
 
   run readlink "$TEST_HOME/.bashrc"
   assert_success

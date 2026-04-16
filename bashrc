@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+# shellcheck disable=SC1090,SC1091
 # @file bashrc
 # @brief get-bashed interactive entrypoint.
 # @description

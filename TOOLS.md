@@ -1,6 +1,6 @@
 ---
 title: TOOLS.md — get-bashed
-updated: 2026-04-10
+updated: 2026-04-15
 status: current
 ---
 
@@ -19,12 +19,13 @@ It is recommended to install the latest GNU Bash for full compatibility:
 
 - Recommended for: Node.js, Python, Java, and other multi-version runtimes.
 - `bashrc.d/60-asdf.sh` activates asdf when present.
+- get-bashed pins default `asdf` runtime versions in `installers/sources.sh` for the built-in `nodejs`, `python`, and `java` installers.
 
 Example:
 ```bash
 asdf plugin add nodejs
-asdf install nodejs lts
-asdf set --home nodejs lts
+asdf install nodejs 24.14.1
+asdf set --home nodejs 24.14.1
 ```
 
 ## Build Flags (macOS)
@@ -54,9 +55,11 @@ This adds `coreutils`, `findutils`, `gnu-sed`, and `gnu-tar` gnubin paths ahead 
 
 ## Optional CLI Tools
 
-`bashrc.d/65-tools.sh` includes a helper to install optional CLIs using Node:
-- `@google/gemini-cli`
-- `@sonar/scan`
+`bashrc.d/65-tools.sh` includes an opt-in helper to install optional CLIs using Node:
+- `@google/gemini-cli@0.38.1`
+- `@sonar/scan@4.3.6`
+
+Those package specs are pinned in `installers/sources.sh`, written to `~/.get-bashed/get-bashed-pins.sh` by the installer, and only used when `GET_BASHED_AUTO_TOOLS=1` and `asdf exec npm` is already available. The runtime checks whether the exact pinned package is already installed before attempting a global install.
 
 ## bash-it
 
@@ -70,8 +73,10 @@ Enable components via search:
 ```bash
 get_bashed_component enable git docker
 ```
-If bash-it isn't available, it will try asdf, brew, or system package managers,
-then fall back to known git/curl sources.
+Install `bash_it` first if you want bash-it search-backed enable/disable behavior:
+```bash
+./install.sh --install bash_it --features bash_it
+```
 
 ## Vim (amix/vimrc)
 
@@ -99,7 +104,7 @@ You can install via the installer:
 ./install.sh --install doppler
 ```
 
-Note: we do not auto-source doppler in shell init. Use `doppler_shell` to start a doppler-enabled subshell.
+Note: startup does not auto-fetch or inject Doppler secrets. Use `doppler_shell` to start a doppler-enabled subshell.
 
 ## Curation Policy
 
@@ -109,8 +114,8 @@ Note: we do not auto-source doppler in shell init. Use `doppler_shell` to start 
 ## Installer UI
 
 If you pass `--with-ui`, the installer will try to use a curses UI (`dialog`).
-If `dialog` is not present, it will attempt to install it using the system package
-manager (Homebrew, apt, dnf, yum). Otherwise it falls back to plain prompts.
+If `dialog` is not present, it will attempt to install it using the detected
+package manager. Otherwise it falls back to plain prompts.
 
 ## Listing and Dry Run
 
@@ -119,7 +124,7 @@ manager (Homebrew, apt, dnf, yum). Otherwise it falls back to plain prompts.
 - `./install.sh --list-profiles` shows available profiles.
 - `./install.sh --list-features` shows available features.
 - `./install.sh --list-installers` shows the installer catalog.
-- `./install.sh --dry-run --install <list>` shows what would be installed.
+- `./install.sh --dry-run --install <list>` shows what would be installed without writing files.
 - `./install.sh --link-dotfiles` backs up and symlinks shell dotfiles to `~/.get-bashed`.
 - `./install.sh --name "Full Name" --email "me@example.com"` sets git identity.
 
@@ -146,7 +151,20 @@ Use `--features` with comma-separated values:
 ## Language Installers
 
 Installers exist for `nodejs`, `python`, and `java`. If `asdf` is installed, they
-will use it. Otherwise they fall back to the system package manager.
+use repo-pinned default versions. Otherwise they fall back to the system package manager.
+
+## Pin Maintenance
+
+The pinned git refs, BATS helper SHAs, pip and pipx package specs, optional Node CLI package specs, and default `asdf` runtime versions live in
+`installers/sources.sh`.
+
+The `actionlint` fallback tarball is pinned by version and verified against manifest SHA-256 values before extraction.
+Managed git-backed installs such as `bash_it` and `asdf` are realigned to their pinned refs on rerun instead of trusting an existing clone blindly.
+
+To print manifest-ready `asdf` runtime pins from your current installed versions:
+```bash
+bin/gen_tool_versions
+```
 
 ## Profiles
 
