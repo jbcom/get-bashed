@@ -1,4 +1,5 @@
 #!/usr/bin/env bats
+# shellcheck disable=SC2016
 
 load test_helper
 
@@ -12,6 +13,7 @@ load test_helper
   cat > "$PREFIX/secrets.d/10-local.sh" <<'EOF'
 export LOCAL_SECRET=1
 EOF
+  chmod 600 "$PREFIX/secrets.d/10-local.sh"
 
   cat > "$FAKEBIN/doppler" <<'EOF'
 #!/bin/sh
@@ -23,6 +25,23 @@ EOF
   run env HOME="$HOME" GET_BASHED_HOME="$PREFIX" GET_BASHED_USE_DOPPLER=1 PATH="$FAKEBIN:/usr/bin:/bin" "$MODERN_BASH" -lc 'source bashrc.d/99-secrets.sh; printf "local=%s doppler=%s\n" "${LOCAL_SECRET:-0}" "${DOPPLER_SECRET:-0}"'
   assert_success
   assert_output "local=1 doppler=0"
+}
+
+@test "secrets module skips non-private secret snippets" {
+  TMPDIR="$(mktemp -d)"
+  HOME="$TMPDIR/home"
+  PREFIX="$HOME/.get-bashed"
+  mkdir -p "$PREFIX/secrets.d"
+
+  cat > "$PREFIX/secrets.d/10-world-readable.sh" <<'EOF'
+export LOCAL_SECRET=1
+EOF
+  chmod 644 "$PREFIX/secrets.d/10-world-readable.sh"
+
+  run env HOME="$HOME" GET_BASHED_HOME="$PREFIX" "$MODERN_BASH" -lc 'source bashrc.d/99-secrets.sh; printf "local=%s\n" "${LOCAL_SECRET:-0}"'
+  assert_success
+  assert_output --partial "local=0"
+  assert_output --partial "require owner-only permissions"
 }
 
 @test "doppler module exposes explicit doppler_shell helper" {

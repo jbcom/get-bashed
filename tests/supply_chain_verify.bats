@@ -64,6 +64,57 @@ EOF
   rm -rf "$tmpdir"
 }
 
+@test "supply_chain_verify uses the resolved repo slug instead of a hard-coded upstream slug" {
+  tmpdir="$(mktemp -d)"
+  bindir="$tmpdir/bin"
+  mkdir -p "$bindir"
+
+  cat >"$bindir/gh" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+if [[ "$1 $2" == "auth status" ]]; then
+  exit 0
+fi
+if [[ "$1" == "api" ]]; then
+  args="$*"
+  case "$args" in
+    *'repos/acme/get-bashed-fork/automated-security-fixes'*'.enabled'*) printf 'true\n' ;;
+    *'repos/acme/get-bashed-fork'*'dependabot_security_updates.status'*) printf 'enabled\n' ;;
+    *'repos/acme/get-bashed-fork'*'secret_scanning.status'*) printf 'enabled\n' ;;
+    *'repos/acme/get-bashed-fork'*'secret_scanning_push_protection.status'*) printf 'enabled\n' ;;
+    *'repos/acme/get-bashed-fork'*'secret_scanning_validity_checks.status'*) printf 'enabled\n' ;;
+    *'repos/acme/get-bashed-fork'*'secret_scanning_non_provider_patterns.status'*) printf 'enabled\n' ;;
+    *'repos/acme/get-bashed-fork/vulnerability-alerts'*) printf '{}\n' ;;
+    *'repos/acme/get-bashed-fork/contents/.github/workflows/codeql.yml?ref=main'*) exit 1 ;;
+    *'.required_status_checks.contexts[]'*)
+      printf '%s\n' \
+        'Quality (ubuntu-latest)' \
+        'Quality (macos-latest)' \
+        'Quality (wsl-ubuntu)' \
+        'SonarQube Scan'
+      ;;
+    *'.required_status_checks.strict'*) printf 'true\n' ;;
+    *'.required_pull_request_reviews.required_approving_review_count'*) printf '1\n' ;;
+    *'.required_pull_request_reviews.dismiss_stale_reviews'*) printf 'true\n' ;;
+    *'.required_pull_request_reviews.require_code_owner_reviews'*) printf 'true\n' ;;
+    *'.enforce_admins.enabled'*) printf 'true\n' ;;
+    *'.required_linear_history.enabled'*) printf 'true\n' ;;
+    *'.required_conversation_resolution.enabled'*) printf 'true\n' ;;
+    *) exit 1 ;;
+  esac
+  exit 0
+fi
+exit 1
+EOF
+  chmod +x "$bindir/gh"
+
+  run env GET_BASHED_REPO_SLUG="acme/get-bashed-fork" PATH="$bindir:$PATH" "$MODERN_BASH" ./scripts/supply_chain_verify.sh
+  assert_success
+  assert_output --partial "All supply chain checks passed"
+
+  rm -rf "$tmpdir"
+}
+
 @test "supply_chain_verify fails when main has codeql.yml but default setup is still enabled" {
   tmpdir="$(mktemp -d)"
   bindir="$tmpdir/bin"

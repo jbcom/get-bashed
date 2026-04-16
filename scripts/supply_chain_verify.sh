@@ -8,6 +8,8 @@ NC='\033[0m'
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+# shellcheck disable=SC1091
+source "$SCRIPT_DIR/lib/supply_chain_common.sh"
 
 failed=0
 
@@ -27,7 +29,7 @@ echo
 workflow_dir="$REPO_ROOT/.github/workflows"
 if [ -d "$workflow_dir" ]; then
   external_uses=$(grep -rE '^[[:space:]]*uses:' "$workflow_dir"/*.yml | grep -v 'uses:[[:space:]]\+\./' || true)
-  if [ -n "$external_uses" ] && ! printf '%s\n' "$external_uses" | grep -vE '@[a-f0-9]{40}' >/dev/null; then
+  if [ -z "$external_uses" ] || ! printf '%s\n' "$external_uses" | grep -vE '@[a-f0-9]{40}' >/dev/null; then
     pass "external GitHub Actions are SHA-pinned"
   else
     fail "one or more external GitHub Actions are not SHA-pinned"
@@ -47,7 +49,7 @@ permission_locked_workflows=(
 
 workflow_permissions_ok="true"
 for workflow in "${permission_locked_workflows[@]}"; do
-  if ! rg -q '^permissions: \{\}$' "$workflow"; then
+  if ! has_regex '^permissions: \{\}$' "$workflow"; then
     workflow_permissions_ok="false"
     break
   fi
@@ -61,7 +63,7 @@ fi
 
 if [ -f "$REPO_ROOT/installers/bootstrap_sources.sh" ] \
   && [ -f "$REPO_ROOT/installers/sources.sh" ] \
-  && ! rg -q 'archive/refs/heads/.+\.tar\.gz|raw\.githubusercontent\.com/.+/HEAD/' \
+  && ! has_regex 'archive/refs/heads/.+\.tar\.gz|raw\.githubusercontent\.com/.+/HEAD/' \
     "$REPO_ROOT/install.sh" \
     "$REPO_ROOT/installers/bootstrap_sources.sh" \
     "$REPO_ROOT/installers/sources.sh"; then
@@ -70,8 +72,8 @@ else
   fail "bootstrap or fallback download sources are not fully pinned"
 fi
 
-if rg -q 'GET_BASHED_ACTIONLINT_SHA256\["linux_amd64"\]' "$REPO_ROOT/installers/sources.sh" \
-  && rg -q 'GET_BASHED_ACTIONLINT_SHA256\["darwin_arm64"\]' "$REPO_ROOT/installers/sources.sh"; then
+if has_regex 'GET_BASHED_ACTIONLINT_SHA256\["linux_amd64"\]' "$REPO_ROOT/installers/sources.sh" \
+  && has_regex 'GET_BASHED_ACTIONLINT_SHA256\["darwin_arm64"\]' "$REPO_ROOT/installers/sources.sh"; then
   pass "actionlint fallback includes pinned per-platform checksums"
 else
   fail "actionlint fallback checksums are incomplete"
@@ -87,8 +89,8 @@ else
   fail "release installer or publication scripts are missing"
 fi
 
-if rg -q '"draft":[[:space:]]*true' "$REPO_ROOT/release-please-config.json" \
-  && rg -q '"force-tag-creation":[[:space:]]*true' "$REPO_ROOT/release-please-config.json"; then
+if has_regex '"draft":[[:space:]]*true' "$REPO_ROOT/release-please-config.json" \
+  && has_regex '"force-tag-creation":[[:space:]]*true' "$REPO_ROOT/release-please-config.json"; then
   pass "release-please is configured for draft-first releases with eager tag creation"
 else
   fail "release-please draft-first or force-tag-creation settings are missing"
@@ -98,24 +100,24 @@ release_workflow="$REPO_ROOT/.github/workflows/release.yml"
 cd_workflow="$REPO_ROOT/.github/workflows/cd.yml"
 if [ -f "$release_workflow" ] \
   && [ -f "$cd_workflow" ] \
-  && rg -q 'steps.release.outputs.release_created' "$cd_workflow" \
-  && rg -q 'scripts/publish_draft_release\.sh' "$cd_workflow" \
-  && rg -q 'secrets.CI_GITHUB_TOKEN \|\| github.token' "$cd_workflow" \
-  && rg -q 'scripts/build_release_artifact\.sh' "$release_workflow" \
-  && rg -q 'scripts/release_validate\.sh' "$release_workflow" \
-  && rg -q 'scripts/publish_draft_release\.sh' "$release_workflow" \
-  && rg -q 'scripts/verify_published_release\.sh' "$release_workflow" \
-  && rg -q 'scripts/publish_pkg_pr\.sh' "$release_workflow" \
-  && rg -q 'workflow_dispatch:' "$release_workflow" \
-  && ! rg -q 'types: \[published\]' "$release_workflow" \
-  && ! rg -q '\|\| true' "$release_workflow"; then
+  && has_regex 'steps.release.outputs.release_created' "$cd_workflow" \
+  && has_regex 'scripts/publish_draft_release\.sh' "$cd_workflow" \
+  && has_regex 'secrets.CI_GITHUB_TOKEN \|\| github.token' "$cd_workflow" \
+  && has_regex 'scripts/build_release_artifact\.sh' "$release_workflow" \
+  && has_regex 'scripts/release_validate\.sh' "$release_workflow" \
+  && has_regex 'scripts/publish_draft_release\.sh' "$release_workflow" \
+  && has_regex 'scripts/verify_published_release\.sh' "$release_workflow" \
+  && has_regex 'scripts/publish_pkg_pr\.sh' "$release_workflow" \
+  && has_regex 'workflow_dispatch:' "$release_workflow" \
+  && ! has_regex 'types: \[published\]' "$release_workflow" \
+  && ! has_regex '\|\| true' "$release_workflow"; then
   pass "release workflows use repo-owned draft-first validation and publication scripts"
 else
   fail "release workflows are missing repo-owned draft-first validation/publication steps or swallow failures"
 fi
 
 if [ -f "$REPO_ROOT/.github/workflows/scorecard.yml" ] \
-  && rg -q 'ossf/scorecard-action@' "$REPO_ROOT/.github/workflows/scorecard.yml"; then
+  && has_regex 'ossf/scorecard-action@' "$REPO_ROOT/.github/workflows/scorecard.yml"; then
   pass "Scorecard workflow is present as a separate security signal"
 else
   fail "Scorecard workflow is missing"
@@ -123,48 +125,49 @@ fi
 
 codeql_workflow="$REPO_ROOT/.github/workflows/codeql.yml"
 if [ -f "$codeql_workflow" ] \
-  && rg -q '^name: CodeQL$' "$codeql_workflow" \
-  && rg -q 'language: \[actions, python\]' "$codeql_workflow" \
-  && rg -q 'queries: security-extended' "$codeql_workflow" \
-  && rg -q 'github/codeql-action/init@' "$codeql_workflow" \
-  && rg -q 'github/codeql-action/autobuild@' "$codeql_workflow" \
-  && rg -q 'github/codeql-action/analyze@' "$codeql_workflow"; then
+  && has_regex '^name: CodeQL$' "$codeql_workflow" \
+  && has_regex 'language: \[actions, python\]' "$codeql_workflow" \
+  && has_regex 'queries: security-extended' "$codeql_workflow" \
+  && has_regex 'github/codeql-action/init@' "$codeql_workflow" \
+  && has_regex 'github/codeql-action/autobuild@' "$codeql_workflow" \
+  && has_regex 'github/codeql-action/analyze@' "$codeql_workflow"; then
   pass "repo-owned CodeQL workflow is checked into the repository"
 else
   fail "repo-owned CodeQL workflow is missing or incomplete"
 fi
 
 if [ -f "$REPO_ROOT/.github/dependabot.yml" ] \
-  && rg -q 'package-ecosystem: "github-actions"' "$REPO_ROOT/.github/dependabot.yml"; then
+  && has_regex 'package-ecosystem: "github-actions"' "$REPO_ROOT/.github/dependabot.yml"; then
   pass "Dependabot configuration is checked into the repo"
 else
   fail "Dependabot configuration is missing or incomplete"
 fi
 
-if rg -q 'docs-linkcheck' "$REPO_ROOT/tox.ini" \
-  && rg -q 'uvx tox -e docs,docs-linkcheck' "$REPO_ROOT/.github/workflows/ci.yml"; then
+if has_regex 'docs-linkcheck' "$REPO_ROOT/tox.ini" \
+  && has_regex 'uvx tox -e docs,docs-linkcheck' "$REPO_ROOT/.github/workflows/ci.yml"; then
   pass "docs link validation is wired into tox and CI"
 else
   fail "docs link validation is missing from tox or CI"
 fi
 
 if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
-  automated_security_fixes_enabled="$(gh api repos/jbcom/get-bashed/automated-security-fixes --jq '.enabled' 2>/dev/null || printf 'false')"
+  repo_slug="$(resolve_repo_slug)"
+  automated_security_fixes_enabled="$(gh api "repos/${repo_slug}/automated-security-fixes" --jq '.enabled' 2>/dev/null || printf 'false')"
   vulnerability_alerts_enabled="false"
-  if gh api repos/jbcom/get-bashed/vulnerability-alerts -H 'Accept: application/vnd.github+json' >/dev/null 2>&1; then
+  if gh api "repos/${repo_slug}/vulnerability-alerts" -H 'Accept: application/vnd.github+json' >/dev/null 2>&1; then
     vulnerability_alerts_enabled="true"
   fi
-  dependabot_security_updates_enabled="$(gh api repos/jbcom/get-bashed --jq '.security_and_analysis.dependabot_security_updates.status' 2>/dev/null || printf 'disabled')"
-  secret_scanning_enabled="$(gh api repos/jbcom/get-bashed --jq '.security_and_analysis.secret_scanning.status' 2>/dev/null || printf 'disabled')"
-  push_protection_enabled="$(gh api repos/jbcom/get-bashed --jq '.security_and_analysis.secret_scanning_push_protection.status' 2>/dev/null || printf 'disabled')"
-  validity_checks_enabled="$(gh api repos/jbcom/get-bashed --jq '.security_and_analysis.secret_scanning_validity_checks.status' 2>/dev/null || printf 'disabled')"
-  non_provider_patterns_enabled="$(gh api repos/jbcom/get-bashed --jq '.security_and_analysis.secret_scanning_non_provider_patterns.status' 2>/dev/null || printf 'disabled')"
+  dependabot_security_updates_enabled="$(gh api "repos/${repo_slug}" --jq '.security_and_analysis.dependabot_security_updates.status' 2>/dev/null || printf 'disabled')"
+  secret_scanning_enabled="$(gh api "repos/${repo_slug}" --jq '.security_and_analysis.secret_scanning.status' 2>/dev/null || printf 'disabled')"
+  push_protection_enabled="$(gh api "repos/${repo_slug}" --jq '.security_and_analysis.secret_scanning_push_protection.status' 2>/dev/null || printf 'disabled')"
+  validity_checks_enabled="$(gh api "repos/${repo_slug}" --jq '.security_and_analysis.secret_scanning_validity_checks.status' 2>/dev/null || printf 'disabled')"
+  non_provider_patterns_enabled="$(gh api "repos/${repo_slug}" --jq '.security_and_analysis.secret_scanning_non_provider_patterns.status' 2>/dev/null || printf 'disabled')"
   live_codeql_workflow="false"
-  if gh api "repos/jbcom/get-bashed/contents/.github/workflows/codeql.yml?ref=main" >/dev/null 2>&1; then
+  if gh api "repos/${repo_slug}/contents/.github/workflows/codeql.yml?ref=main" >/dev/null 2>&1; then
     live_codeql_workflow="true"
   fi
   if [ "$live_codeql_workflow" = "true" ]; then
-    live_codeql_default_state="$(gh api repos/jbcom/get-bashed/code-scanning/default-setup --jq '.state' 2>/dev/null || printf 'unknown')"
+    live_codeql_default_state="$(gh api "repos/${repo_slug}/code-scanning/default-setup" --jq '.state' 2>/dev/null || printf 'unknown')"
     if [ "$live_codeql_default_state" = "not-configured" ]; then
       pass "live GitHub default CodeQL setup is disabled in favor of the repo-owned workflow"
     else
@@ -220,7 +223,7 @@ else
 fi
 
 if [ -f "$REPO_ROOT/scripts/verify_branch_protection.sh" ] \
-  && rg -q '^verify-branch-protection:' "$REPO_ROOT/Makefile"; then
+  && has_regex '^verify-branch-protection:' "$REPO_ROOT/Makefile"; then
   if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
     if bash "$REPO_ROOT/scripts/verify_branch_protection.sh" >/dev/null; then
       pass "branch protection matches the documented required CI contexts"
@@ -235,7 +238,7 @@ else
 fi
 
 if [ -f "$REPO_ROOT/scripts/reconcile_codeql_governance.sh" ] \
-  && rg -q '^reconcile-codeql-governance:' "$REPO_ROOT/Makefile"; then
+  && has_regex '^reconcile-codeql-governance:' "$REPO_ROOT/Makefile"; then
   pass "post-merge CodeQL governance reconciliation is scripted in the repo"
 else
   fail "post-merge CodeQL governance reconciliation is missing"
@@ -243,8 +246,8 @@ fi
 
 if [ -f "$REPO_ROOT/scripts/verify_immutable_release_governance.sh" ] \
   && [ -f "$REPO_ROOT/scripts/reconcile_immutable_release_governance.sh" ] \
-  && rg -q '^verify-immutable-release-governance:' "$REPO_ROOT/Makefile" \
-  && rg -q '^reconcile-immutable-release-governance:' "$REPO_ROOT/Makefile"; then
+  && has_regex '^verify-immutable-release-governance:' "$REPO_ROOT/Makefile" \
+  && has_regex '^reconcile-immutable-release-governance:' "$REPO_ROOT/Makefile"; then
   if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
     if bash "$REPO_ROOT/scripts/verify_immutable_release_governance.sh" >/dev/null; then
       pass "immutable release governance is scripted and verified"

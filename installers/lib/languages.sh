@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 # @description Install asdf (handler).
 install_asdf() {
   if _using_asdf; then

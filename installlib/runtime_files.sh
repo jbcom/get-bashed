@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 apply_gitconfig() {
   local cfg="$PREFIX/gitconfig"
 

@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 # @description Install a component using available methods.
 # @arg $1 string Action (enable|disable|install).
 # @arg $2 string Term to resolve/install.

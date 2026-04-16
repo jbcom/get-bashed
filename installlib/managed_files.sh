@@ -1,3 +1,7 @@
+#!/usr/bin/env bash
+
+# shellcheck disable=SC2178
+
 ensure_block() {
   local file="$1"
   local marker="$2"
@@ -18,7 +22,7 @@ ensure_block() {
 backup_file() {
   local file="$1"
   local backup_dir="$PREFIX/backup"
-  local base ts
+  local base ts backup_path suffix
 
   [[ -e "$file" ]] || return 0
 
@@ -27,7 +31,13 @@ backup_file() {
   base="$(basename "$file")"
   base="${base#.}"
   ts="$(date +%s)"
-  mv "$file" "$backup_dir/${base}.${ts}"
+  backup_path="$backup_dir/${base}.${ts}"
+  suffix=0
+  while [[ -e "$backup_path" ]]; do
+    suffix=$((suffix + 1))
+    backup_path="$backup_dir/${base}.${ts}.${suffix}"
+  done
+  mv "$file" "$backup_path"
 }
 
 link_dotfile() {

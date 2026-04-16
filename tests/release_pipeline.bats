@@ -15,8 +15,8 @@ PY
 
 wait_for_http() {
   local url="$1"
-  local attempt
-  for attempt in $(seq 1 50); do
+  local _
+  for _ in $(seq 1 50); do
     if python3 - "$url" <<'PY' >/dev/null 2>&1
 from urllib.request import urlopen
 import sys
@@ -124,8 +124,7 @@ EOF
 
   "$MODERN_BASH" ./scripts/build_release_artifact.sh 9.9.10 "$tmpdir"
 
-  run "$MODERN_BASH" ./scripts/release_validate.sh 9.9.10 "$tmpdir"
-  assert_success
+  "$MODERN_BASH" ./scripts/release_validate.sh 9.9.10 "$tmpdir"
 
   assert_file_exist "$tmpdir/checksums.txt"
   assert_file_exist "$tmpdir/pkg/get-bashed.rb"
@@ -154,6 +153,7 @@ EOF
   python3 -m http.server "$port" --directory "$tmpdir" >"$tmpdir/server.log" 2>&1 &
   server_pid=$!
   wait_for_http "http://127.0.0.1:${port}/checksums.txt"
+  wait_for_http "http://127.0.0.1:${port}/get-bashed-9.9.11-unix.tar.gz"
 
   run env \
     HOME="$tmpdir/home" \
@@ -180,38 +180,32 @@ EOF
   python3 -m http.server "$port" --directory "$tmpdir" >"$tmpdir/server.log" 2>&1 &
   server_pid=$!
   wait_for_http "http://127.0.0.1:${port}/checksums.txt"
+  wait_for_http "http://127.0.0.1:${port}/get-bashed-9.9.16-unix.tar.gz"
 
   cat >"$bindir/wget" <<'EOF'
-#!/usr/bin/env python3
-from pathlib import Path
-from urllib.request import urlopen
-import sys
+#!/bin/sh
+set -eu
 
-argv = sys.argv[1:]
-if len(argv) == 2 and argv[0] == "-qO-":
-    with urlopen(argv[1], timeout=10) as response:
-        sys.stdout.buffer.write(response.read())
-    raise SystemExit(0)
+if [ "$#" -eq 2 ] && [ "$1" = "-qO-" ]; then
+  exec curl -fsSL "$2"
+fi
 
-if len(argv) == 3 and argv[0] == "-qO":
-    target = Path(argv[1])
-    target.parent.mkdir(parents=True, exist_ok=True)
-    with urlopen(argv[2], timeout=10) as response:
-        target.write_bytes(response.read())
-    raise SystemExit(0)
+if [ "$#" -eq 3 ] && [ "$1" = "-qO" ]; then
+  exec curl -fsSL -o "$2" "$3"
+fi
 
-raise SystemExit(f"unsupported fake wget arguments: {' '.join(argv)}")
+echo "unsupported fake wget arguments: $*" >&2
+exit 1
 EOF
   chmod +x "$bindir/wget"
 
-  run env \
+  env \
     HOME="$tmpdir/home" \
     PATH="$bindir:$PATH" \
     GET_BASHED_DOWNLOAD_TOOL="wget" \
     GET_BASHED_RELEASE_BASE_URL="http://127.0.0.1:${port}" \
     GET_BASHED_RELEASE_CHECKSUMS_URL="http://127.0.0.1:${port}/checksums.txt" \
     sh ./docs/public/install.sh --version 9.9.16 --auto --profiles minimal --prefix "$tmpdir/home/.get-bashed"
-  assert_success
 
   assert_file_exist "$tmpdir/home/.get-bashed/get-bashedrc.sh"
 
@@ -279,6 +273,59 @@ EOF
   assert_success
 
   run grep -F 'pr merge --repo jbcom/pkgs --auto --squash https://example.test/pr/1' "$log"
+  assert_success
+
+  rm -rf "$tmpdir"
+}
+
+@test "publish_pkg_pr uses gh repo clone when a direct target repo url is not provided" {
+  tmpdir="$(mktemp -d)"
+  remote="$tmpdir/pkgs.git"
+  worktree="$tmpdir/worktree"
+  manifests="$tmpdir/manifests"
+  bindir="$tmpdir/bin"
+  log="$tmpdir/gh.log"
+
+  git init --bare --initial-branch=main "$remote" >/dev/null
+  git clone "$remote" "$worktree" >/dev/null
+  (
+    cd "$worktree"
+    git config user.name Test
+    git config user.email test@example.com
+    touch .keep
+    git add .keep
+    git commit -m "init" >/dev/null
+    git push origin main >/dev/null
+  )
+
+  "$MODERN_BASH" ./scripts/build_release_artifact.sh 9.9.17 "$tmpdir"
+  cat "$tmpdir/get-bashed-9.9.17-unix.tar.gz.sha256" "$tmpdir/get-bashed-9.9.17-windows.zip.sha256" >"$tmpdir/checksums.txt"
+  "$MODERN_BASH" ./scripts/generate_pkg_manifests.sh 9.9.17 "$tmpdir/checksums.txt" "$manifests"
+
+  mkdir -p "$bindir"
+  cat >"$bindir/gh" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+printf '%s\n' "\$*" >>"$log"
+if [[ "\$1 \$2" == "repo clone" ]]; then
+  git clone "$remote" "\$4" >/dev/null
+  exit 0
+fi
+if [[ "\$1 \$2" == "pr create" ]]; then
+  printf 'https://example.test/pr/17\n'
+  exit 0
+fi
+EOF
+  chmod +x "$bindir/gh"
+
+  run env \
+    GH_TOKEN=fake-token \
+    TARGET_REPO=jbcom/pkgs \
+    PATH="$bindir:$PATH" \
+    "$MODERN_BASH" ./scripts/publish_pkg_pr.sh 9.9.17 "$manifests"
+  assert_success
+
+  run grep -F 'repo clone jbcom/pkgs' "$log"
   assert_success
 
   rm -rf "$tmpdir"

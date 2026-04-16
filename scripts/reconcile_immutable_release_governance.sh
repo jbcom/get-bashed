@@ -3,7 +3,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=scripts/lib/immutable_release_flow.sh
+# shellcheck disable=SC1090,SC1091
 . "$SCRIPT_DIR/lib/immutable_release_flow.sh"
 
 REPO="${1:-jbcom/get-bashed}"

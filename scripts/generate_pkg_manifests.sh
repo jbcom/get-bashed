@@ -15,7 +15,7 @@ WINDOWS_ARCHIVE="get-bashed-${VERSION}-windows.zip"
 sha_of() {
   local name="$1"
   local sha
-  sha="$(grep " ${name}\$" "$CHECKSUMS" | awk '{print $1}')"
+  sha="$(awk -v name="$name" '$2 == name {print $1}' "$CHECKSUMS")"
   if [ -z "$sha" ]; then
     echo "missing checksum for ${name}" >&2
     exit 1

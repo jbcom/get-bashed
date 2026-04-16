@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 # @description Install GNU tools (handler).
 install_gnu_tools() {
   if _using_brew; then

@@ -1,3 +1,7 @@
+#!/usr/bin/env bash
+
+# shellcheck disable=SC2153
+
 install_dialog() {
   if command -v dialog >/dev/null 2>&1; then
     return 0
@@ -21,7 +25,8 @@ prompt_yes_no() {
   local prompt='[y/N]'
 
   if [[ "$YES" -eq 1 ]]; then
-    return 0
+    [[ "$default" -eq 1 ]]
+    return
   fi
 
   if [[ "$default" -eq 1 ]]; then

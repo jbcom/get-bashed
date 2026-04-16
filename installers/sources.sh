@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# shellcheck disable=SC1091
+# shellcheck disable=SC1091,SC2034
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/bootstrap_sources.sh"
 
 declare -gA GET_BASHED_GIT_SOURCES=()
