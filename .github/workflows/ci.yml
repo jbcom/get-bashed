@@ -44,7 +44,7 @@ jobs:
       - name: Build Sphinx docs and linkcheck
         run: uvx tox -e docs,docs-linkcheck
       - name: Verify supply chain posture
-        run: ./scripts/supply_chain_verify.sh
+        run: bash ./scripts/supply_chain_verify.sh
 
   wsl-quality:
     name: Quality (wsl-ubuntu)
