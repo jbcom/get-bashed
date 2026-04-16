@@ -9,6 +9,20 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+append_ci_path() {
+  local path_entry="$1"
+
+  [[ -n "$path_entry" && -d "$path_entry" ]] || return 0
+  case ":$PATH:" in
+    *":$path_entry:"*) ;;
+    *) export PATH="$path_entry:$PATH" ;;
+  esac
+
+  if [[ -n "${GITHUB_PATH:-}" ]]; then
+    printf '%s\n' "$path_entry" >> "$GITHUB_PATH"
+  fi
+}
+
 # Prefer RUNNER_TEMP, then RUNNER_TOOL_CACHE, then /tmp
 PREFIX="${GET_BASHED_HOME:-${RUNNER_TEMP:-${RUNNER_TOOL_CACHE:-/tmp}}/get-bashed}"
 export GET_BASHED_HOME="$PREFIX"
@@ -21,12 +35,16 @@ INSTALLS="${1:-shdoc,actionlint,shellcheck,bashate}"
 
 "$ROOT_DIR/install.sh" --auto --install "$INSTALLS"
 
-if [[ -n "${GITHUB_ENV:-}" ]]; then
-  printf 'GET_BASHED_HOME=%s\n' "$GET_BASHED_HOME" >> "$GITHUB_ENV"
+append_ci_path "$GET_BASHED_HOME/bin"
+
+if command -v brew >/dev/null 2>&1; then
+  brew_prefix="$(brew --prefix 2>/dev/null || true)"
+  append_ci_path "$brew_prefix/bin"
+  append_ci_path "$brew_prefix/sbin"
 fi
 
-if [[ -n "${GITHUB_PATH:-}" ]]; then
-  printf '%s\n' "$GET_BASHED_HOME/bin" >> "$GITHUB_PATH"
+if [[ -n "${GITHUB_ENV:-}" ]]; then
+  printf 'GET_BASHED_HOME=%s\n' "$GET_BASHED_HOME" >> "$GITHUB_ENV"
 fi
 
 echo "CI tools installed to $GET_BASHED_HOME"

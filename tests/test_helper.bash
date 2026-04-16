@@ -39,3 +39,51 @@ detect_modern_bash() {
 
 MODERN_BASH="${MODERN_BASH:-$(detect_modern_bash)}"
 export MODERN_BASH
+
+repo_search() {
+  local pattern="$1"
+  shift
+
+  local path file exclude skip
+  local -a files=()
+  local -a filtered=()
+  local -a excludes=()
+
+  while (($#)); do
+    case "$1" in
+      --exclude)
+        excludes+=("$2")
+        shift 2
+        ;;
+      *)
+        path="$1"
+        if [[ -d "$path" ]]; then
+          while IFS= read -r file; do
+            files+=("$file")
+          done < <(find "$path" -type f | sort)
+        elif [[ -e "$path" ]]; then
+          files+=("$path")
+        fi
+        shift
+        ;;
+    esac
+  done
+
+  [[ "${#files[@]}" -gt 0 ]] || return 1
+
+  for file in "${files[@]}"; do
+    skip=0
+    for exclude in "${excludes[@]}"; do
+      case "$file" in
+        "$exclude"|*/"$exclude")
+          skip=1
+          break
+          ;;
+      esac
+    done
+    [[ "$skip" -eq 0 ]] && filtered+=("$file")
+  done
+
+  [[ "${#filtered[@]}" -gt 0 ]] || return 1
+  grep -nE -- "$pattern" "${filtered[@]}"
+}
