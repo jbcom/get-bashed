@@ -21,6 +21,7 @@ declare -A TOOL_CURL_CMD
 declare -A TOOL_HANDLER
 declare -A TOOL_OPT_DEPS
 declare -A TOOL_BIN
+declare -A TOOL_TARGET_DIR
 
 tool_register() {
   local id="$1" desc="$2" deps="$3" platforms="$4" methods="$5"
@@ -66,6 +67,11 @@ tool_bin() {
   TOOL_BIN["$id"]="$bin"
 }
 
+tool_target_dir() {
+  local id="$1" target="$2"
+  TOOL_TARGET_DIR["$id"]="$target"
+}
+
 # @internal
 load_installers() {
   INSTALLERS=""
@@ -77,7 +83,7 @@ load_installers() {
 }
 # Core tools
 tool_register brew "Homebrew/Linuxbrew installer" "" "macos,linux,wsl" "curl"
-tool_curl brew "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh" "/bin/bash"
+tool_curl brew "${GET_BASHED_CURL_SOURCES["brew"]}" "${GET_BASHED_CURL_CMD["brew"]}"
 tool_bin brew "brew"
 
 tool_register asdf "asdf version manager" "" "macos,linux,wsl" "handler"
@@ -87,14 +93,19 @@ tool_register bash "Latest GNU Bash" "" "macos,linux,wsl" "brew,apt,dnf,yum,pacm
 tool_pkgs bash "bash" "bash" "bash" "bash" "bash"
 
 tool_register bash_it "bash-it framework" "git" "macos,linux,wsl" "git"
-tool_git bash_it "https://github.com/Bash-it/bash-it.git"
+tool_git bash_it "${GET_BASHED_GIT_SOURCES["bash_it"]}"
+tool_target_dir bash_it "bash-it"
 
 tool_register vimrc "amix/vimrc (awesome/basic)" "git" "macos,linux,wsl" "git"
-tool_git vimrc "https://github.com/amix/vimrc.git"
+tool_git vimrc "${GET_BASHED_GIT_SOURCES["vimrc"]}"
 tool_handler vimrc "install_vimrc"
 
 tool_register shdoc "shdoc (shell script doc generator)" "" "macos,linux,wsl" "handler"
 tool_handler shdoc "install_shdoc"
+
+tool_register uv "uv" "" "macos,linux,wsl" "brew,pip"
+tool_pkgs uv "uv" "" "" "" ""
+tool_bin uv "uvx"
 
 tool_register dialog "curses dialog UI" "" "macos,linux,wsl" "brew,apt,dnf,yum"
 tool_pkgs dialog "dialog" "dialog" "dialog" "dialog" ""
@@ -103,7 +114,9 @@ tool_register pipx "pipx" "" "macos,linux,wsl" "brew,apt,dnf,yum,pacman,pip"
 tool_pkgs pipx "pipx" "pipx" "pipx" "pipx" "python-pipx"
 
 tool_register pre_commit "pre-commit" "pipx" "macos,linux,wsl" "pipx"
+tool_bin pre_commit "pre-commit"
 tool_register bashate "bashate" "pipx" "macos,linux,wsl" "pipx"
+tool_bin bashate "bashate"
 
 tool_register shellcheck "shellcheck" "" "macos,linux,wsl" "brew,apt,dnf,yum,pacman"
 tool_pkgs shellcheck "shellcheck" "shellcheck" "ShellCheck" "ShellCheck" "shellcheck"
@@ -132,6 +145,7 @@ tool_opt_deps git "GET_BASHED_GIT_SIGNING:gnupg"
 
 tool_register git_lfs "git-lfs" "" "macos,linux,wsl" "brew,apt,dnf,yum"
 tool_pkgs git_lfs "git-lfs" "git-lfs" "git-lfs" "git-lfs" ""
+tool_bin git_lfs "git-lfs"
 
 tool_register gh "GitHub CLI" "" "macos,linux,wsl" "brew,apt"
 tool_pkgs gh "gh" "gh" "" "" ""
@@ -181,6 +195,7 @@ tool_pkgs terraform "terraform" "" "" "" ""
 
 tool_register awscli "AWS CLI" "" "macos,linux,wsl" "brew,apt"
 tool_pkgs awscli "awscli" "awscli" "" "" ""
+tool_bin awscli "aws"
 
 tool_register kubectl "kubectl" "" "macos,linux,wsl" "brew"
 tool_pkgs kubectl "kubectl" "" "" "" ""

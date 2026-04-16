@@ -1,44 +1,35 @@
 ---
 title: SHDOC.md — get-bashed
-updated: 2026-04-10
+updated: 2026-04-15
 status: current
 ---
 
 # shdoc
 
-This repo uses `shdoc` to generate documentation from shell scripts.
+get-bashed uses `shdoc` to generate installer-facing shell API docs.
 
 ## Install
 
-Arch Linux (AUR):
+Preferred:
+
 ```bash
-yay -S shdoc-git
+./install.sh --install shdoc
 ```
 
-Using Git (requires gawk):
-```bash
-sudo apt-get install gawk
-
-git clone --recursive https://github.com/reconquest/shdoc
-cd shdoc
-sudo make install
-```
-
-Local (no sudo) to get-bashed prefix:
-```bash
-GET_BASHED_HOME="$HOME/.get-bashed"
-mkdir -p "$GET_BASHED_HOME/bin"
-
-git clone --recursive https://github.com/reconquest/shdoc
-cd shdoc
-make install PREFIX="$GET_BASHED_HOME"
-```
-
-Note: shdoc requires Bash 4+ for `;;&` case labels. On macOS, install a newer
-Bash via Homebrew and use that when building from source.
+If the package manager does not provide `shdoc`, the installer falls back to a pinned git ref and installs the script into `GET_BASHED_HOME/bin` with a portable `gawk` shebang.
 
 ## Generate
 
 ```bash
-./scripts/gen-docs.sh
+make docs
 ```
+
+For direct script usage, `./scripts/gen-docs.sh` still works when `shdoc` is already on `PATH`.
+
+This regenerates:
+
+- `docs/INSTALLER.md`
+- `docs/INSTALLERS_HELPERS.md`
+- `docs/INSTALLERS.md`
+
+`docs/MODULES.md` is maintained manually.

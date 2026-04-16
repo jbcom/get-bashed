@@ -1,6 +1,6 @@
 ---
 title: TESTING.md — get-bashed
-updated: 2026-04-10
+updated: 2026-04-15
 status: current
 ---
 
@@ -8,138 +8,92 @@ status: current
 
 ## Strategy
 
-Tests validate installer behavior and shell wiring, not runtime shell customizations. The goal is to confirm that:
+The test suite covers installer semantics, runtime behavior, docs contract drift, and install verification.
 
-- The installer copies the correct files and writes the correct config.
-- Feature flags and profiles produce the expected `get-bashedrc.sh` output.
-- Dotfile linking and backup behavior is correct.
-- Install verification passes on a clean prefix.
-
-## Test Framework
-
-Tests use [BATS](https://github.com/bats-core/bats-core) (Bash Automated Testing System) with three helper libraries:
-
-- `bats-support` — core BATS helpers
-- `bats-assert` — assertion library (`assert_success`, `assert_output`, etc.)
-- `bats-file` — file and directory assertions (`assert_file_exist`, `assert_dir_exist`)
-
-Helper libraries are pinned to specific commit SHAs in `scripts/test-setup.sh`. Do not update these without auditing the new commits.
-
-## Running Tests
-
-Fetch helper libraries (one time):
-
-```bash
-./scripts/test-setup.sh
-```
-
-Run the full suite:
-
-```bash
-bats tests
-```
-
-Or via Make:
-
-```bash
-make test
-```
-
-Make runs `./scripts/test-setup.sh` before `bats tests`.
-
-## Test Files
-
-| File | Coverage |
-|---|---|
-| `tests/install.bats` | Installer copies files and wires `~/.bashrc` / `~/.bash_profile` |
-| `tests/config_output.bats` | Feature flags and profiles produce correct `get-bashedrc.sh` |
-| `tests/link_dotfiles.bats` | `--link-dotfiles` creates symlinks and backs up existing files |
-| `tests/registry_idempotent.bats` | Installer can be re-run without error |
-| `tests/optional_deps.bats` | Optional dependency gating by feature flags |
-
-## Isolation
-
-Every test creates its own temp `HOME` directory:
-
-```bash
-TMPDIR="$(mktemp -d)"
-HOME="$TMPDIR"
-```
-
-This prevents any test from modifying the developer's real home directory. Tests clean up via temp directory expiry; they do not explicitly clean up on failure.
-
-## CI Coverage
-
-The `tests` job in `ci.yml` runs:
-
-1. `scripts/ci-setup.sh "bats"` — installs bats into `GET_BASHED_HOME`.
-2. `scripts/test-setup.sh` — fetches pinned bats helper libraries.
-3. `bats tests` — runs the full suite.
-4. `scripts/verify-install.sh` — validates that a basic install produces the expected wiring.
-
-## Install Verification
-
-`scripts/verify-install.sh` performs a smoke-test install and checks:
-
-- `~/.get-bashed/bashrc` exists.
-- `~/.get-bashed/bashrc.d/` exists.
-- `~/.get-bashed/get-bashedrc.sh` was written.
-- `~/.bashrc` contains the expected source snippet.
-
-This runs after BATS to catch regressions that unit tests may miss.
-
-## Linting
-
-The `lint` job runs pre-commit:
-
-```bash
-pre-commit run --all-files
-```
-
-Pre-commit hooks run:
-
-- `shellcheck` — shell script linting.
-- `bashate` — PEP 8 style for shell (max line length 120).
-- `actionlint` — GitHub Actions workflow linting.
-- `gitleaks` — secret detection.
-- Standard file hygiene (trailing whitespace, end-of-file newlines, YAML/JSON validation).
-
-Run locally:
+## Commands
 
 ```bash
 make lint
-# or
-pre-commit run --all-files
+make test
+make docs
+make docs-check
+make verify-security
+make verify-branch-protection
+make verify-immutable-release-governance
+make reconcile-codeql-governance
+make reconcile-immutable-release-governance
+make package-release
+make smoke-release
+make release-validate
 ```
 
-Install the pre-commit hook:
+`make test` runs:
 
-```bash
-pre-commit install
-```
+1. `source ./scripts/ci-setup.sh "bats"`
+2. `./scripts/test-setup.sh`
+3. `bats tests`
+4. `./scripts/verify-install.sh`
 
-## Adding Tests
+The BATS suite resolves a Bash 4+ interpreter at runtime instead of assuming a macOS Homebrew path, so the same tests run against the Ubuntu and macOS CI matrix entries and the Ubuntu-under-WSL validation job.
+Direct ad hoc runs such as `bats tests/runtime_modules.bats` also self-bootstrap the pinned helper libraries through `tests/test_helper.bash` when `tests/lib/` is missing.
 
-1. Add a new `.bats` file in `tests/` or add `@test` blocks to an existing file.
-2. Load helpers at the top: `load test_helper`.
-3. Create a temp HOME per test to isolate side effects.
-4. Use `run` for commands whose exit code you want to inspect.
-5. Use `assert_success`, `assert_failure`, `assert_output`, `assert_file_exist`, etc.
+`make docs` runs:
 
-Example:
+1. `source ./scripts/ci-setup.sh "shdoc,uv"`
+2. `./scripts/gen-docs.sh`
+3. `./scripts/validate-docs.sh`
+4. `uvx tox -e docs`
 
-```bash
-@test "my new test" {
-  TMPDIR="$(mktemp -d)"
-  HOME="$TMPDIR"
+The docs targets now bootstrap both `shdoc` and `uv` so `uvx` is available even on a machine that does not already have it on `PATH`.
+`make docs-check` runs the same docs generation path and then adds `uvx tox -e docs,docs-linkcheck`.
 
-  HOME="$HOME" bash ./install.sh --auto --prefix "$HOME/.get-bashed" --force
+`make verify-security` runs the repo-owned supply-chain verifier across workflow SHA pinning, the checked-in `codeql.yml` and `scorecard.yml` workflows, pinned installer download sources, Dependabot/security-fix posture, secret scanning posture, draft-first release publication wiring, immutable-release governance, docs-link wiring, and branch-protection verification availability. Once `codeql.yml` lands on `main`, that same verifier expects GitHub default CodeQL setup to be turned off.
 
-  assert_file_exist "$HOME/.get-bashed/get-bashedrc.sh"
-}
-```
+`make release-validate` builds the Unix and Windows release bundles, validates their checksums and archive contents, generates the Homebrew/Scoop/Chocolatey manifests, and exercises `docs/public/install.sh` against a local HTTP server backed by the built release archives. That checked-in validation now forces the installer through both its default downloader path and its supported `wget` fallback path.
 
-## Known Gaps
+`make verify-branch-protection` is a separate authenticated governance check. It uses `gh api` to verify that GitHub branch protection for `main` still requires the exact CI job names this repo depends on and still enforces the expected review, code owner, and branch-safety settings.
+`make reconcile-codeql-governance` is the one-time authenticated cutover for moving live `main` from GitHub default CodeQL setup to the checked-in `.github/workflows/codeql.yml` path once that workflow has landed on `main`.
+`make verify-immutable-release-governance` is the parallel live check for releases. It defers until the checked-in draft-first release flow is present on `main`, and after that it expects GitHub immutable releases to be enabled.
+`make reconcile-immutable-release-governance` is the one-time authenticated cutover for enabling GitHub immutable releases after the checked-in draft-first flow has landed on `main`.
 
-- No coverage of runtime module behavior (module sourcing, conditional flags).
-- shdoc availability is not tested in CI (shdoc unavailable via Homebrew on macOS; installed locally in CI via `GET_BASHED_HOME/bin`).
+## BATS coverage
+
+The suite currently covers:
+
+- installer config output and escaping
+- bootstrap selection behavior
+- true dry-run behavior
+- link-dotfiles behavior and backups
+- manifest-based force behavior for managed assets
+- optional dependency resolution
+- runtime module behavior for Doppler and asdf
+- pinned `asdf` runtime selection
+- legacy migration safety
+- documentation contract checks
+- branch-protection verifier behavior
+- supply-chain verifier behavior
+- release bundle and package-manifest validation
+- immutable-release governance verification and cutover
+- docs-site installer fallback downloader coverage
+
+## CI coverage
+
+`ci.yml` runs the full quality pipeline on:
+
+- `ubuntu-latest`
+- `macos-latest`
+
+It also runs a dedicated WSL validation job on:
+
+- `windows-2025`, booting Ubuntu under WSL for lint, BATS, and install verification
+
+The Ubuntu and macOS matrix entries run lint, BATS, install verification, docs generation, docs build, Sphinx link checking, and the repo-owned supply-chain verifier from a clean checkout. The WSL job reuses the repo `make lint` and `make test` targets inside Ubuntu under WSL so the Windows-hosted Linux path is exercised directly.
+Separately, `.github/workflows/codeql.yml` runs repo-owned advanced CodeQL analysis for `actions` and `python` on PRs, on `main`, and on the weekly schedule.
+
+## Helper libraries
+
+`scripts/test-setup.sh` fetches pinned BATS helper libraries into `tests/lib/` using refs from `installers/sources.sh`. If a library directory already exists without git metadata, with the wrong remote, or at the wrong commit, the script replaces it so repeated runs stay deterministic.
+
+## Remaining gaps
+
+- Optional startup behaviors still need periodic review for latency and predictability.

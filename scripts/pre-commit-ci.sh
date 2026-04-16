@@ -7,9 +7,12 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PREFIX="${GET_BASHED_HOME:-${RUNNER_TEMP:-${RUNNER_TOOL_CACHE:-/tmp}}/get-bashed}"
 
-# shellcheck disable=SC1091
-. "$ROOT_DIR/scripts/ci-setup.sh" "pre_commit,actionlint,shellcheck,bashate,shdoc"
+export GET_BASHED_HOME="$PREFIX"
+export PATH="$GET_BASHED_HOME/bin:$PATH"
+
+"$ROOT_DIR/scripts/ci-setup.sh" "pre_commit,actionlint,shellcheck,bashate,shdoc"
 
 if command -v shdoc >/dev/null 2>&1; then
   "$ROOT_DIR/scripts/gen-docs.sh"

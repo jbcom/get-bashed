@@ -1,25 +1,45 @@
 #!/usr/bin/env bash
 # @file gen_tool_versions
-# @brief Update all asdf plugins to latest versions.
+# @brief Print pinned asdf runtime versions for get-bashed.
+
+# Generate manifest-ready entries for installers/sources.sh using currently
+# installed asdf runtimes. This does not install or update anything.
 
 set -euo pipefail
 
-plugins="$(asdf plugin list 2>/dev/null || true)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-for plugin in $plugins; do
-  [[ -z "$plugin" ]] && continue
-  asdf install "$plugin" latest
-done
+# shellcheck disable=SC1091
+source "$ROOT_DIR/installers/sources.sh"
 
-for plugin in $plugins; do
-  [[ -z "$plugin" ]] && continue
-  versions=$(asdf list "$plugin" 2>/dev/null | sed 's/^[[:space:]]*//' | grep -v '^latest$' || true)
-  if [[ -z "$versions" ]]; then
-    echo "No versions installed for $plugin"
-    continue
+installed_version() {
+  local plugin="$1"
+  local version
+
+  version="$(asdf current "$plugin" 2>/dev/null | awk 'NR == 1 { print $2 }')"
+  if [[ -n "$version" && "$version" != "system" ]]; then
+    printf '%s\n' "$version"
+    return 0
   fi
 
-  latest_version=$(echo "$versions" | sort -V | tail -n 1)
-  echo "Setting $plugin to $latest_version"
-  asdf set "$plugin" "$latest_version"
+  asdf list "$plugin" 2>/dev/null | sed 's/^[[:space:]]*//' | awk 'NF { last = $0 } END { print last }'
+}
+
+if ! command -v asdf >/dev/null 2>&1; then
+  echo "asdf is required to inspect installed runtime versions." >&2
+  exit 1
+fi
+
+printf 'declare -Ar GET_BASHED_ASDF_DEFAULT_VERSIONS=(\n'
+for plugin in java nodejs python; do
+  version="$(installed_version "$plugin")"
+  if [[ -z "$version" ]]; then
+    version="${GET_BASHED_ASDF_DEFAULT_VERSIONS[$plugin]:-}"
+  fi
+  if [[ -z "$version" ]]; then
+    echo "No installed or pinned version found for ${plugin}." >&2
+    exit 1
+  fi
+  printf '  ["%s"]="%s"\n' "$plugin" "$version"
 done
+printf ')\n'

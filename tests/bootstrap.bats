@@ -1,0 +1,148 @@
+#!/usr/bin/env bats
+
+load test_helper
+
+@test "install.sh ignores PATH bash 3.x when a modern absolute bash is available" {
+  [[ -n "$MODERN_BASH" ]] || skip "No Bash 4+ candidate on this platform"
+
+  TMPDIR="$(mktemp -d)"
+  FAKEBIN="$TMPDIR/bin"
+  MARKER="$TMPDIR/path-bash-used"
+  mkdir -p "$FAKEBIN"
+
+  cat > "$FAKEBIN/bash" <<EOF
+#!/bin/sh
+if [ "\$1" = "-c" ]; then
+  printf '3'
+  exit 0
+fi
+echo used > "$MARKER"
+exit 99
+EOF
+  chmod +x "$FAKEBIN/bash"
+
+  run env PATH="$FAKEBIN:/usr/bin:/bin" ./install.sh --help
+  assert_success
+  assert_file_not_exist "$MARKER"
+}
+
+@test "install.sh bootstraps Homebrew before installing bash when only an old bash is available" {
+  [[ -n "$MODERN_BASH" ]] || skip "No Bash 4+ candidate on this platform"
+
+  TMPDIR="$(mktemp -d)"
+  FAKEBIN="$TMPDIR/bin"
+  LOG="$TMPDIR/bootstrap.log"
+  INSTALLER_PAYLOAD="$TMPDIR/homebrew-install.sh"
+  mkdir -p "$FAKEBIN"
+
+  cat > "$FAKEBIN/bash" <<'EOF'
+#!/bin/sh
+if [ "$1" = "-c" ]; then
+  printf '3'
+  exit 0
+fi
+exit 99
+EOF
+  chmod +x "$FAKEBIN/bash"
+
+  cat > "$INSTALLER_PAYLOAD" <<EOF
+#!/bin/sh
+cat > "$FAKEBIN/brew" <<'BREW'
+#!/bin/sh
+printf '%s\n' "\$*" >> "$LOG"
+if [ "\$1" = "install" ] && [ "\$2" = "bash" ]; then
+  cat > "$FAKEBIN/bash" <<'MODERN'
+#!/bin/sh
+if [ "\$1" = "-c" ]; then
+  printf '5'
+  exit 0
+fi
+exec "$MODERN_BASH" "\$@"
+MODERN
+  chmod +x "$FAKEBIN/bash"
+  exit 0
+fi
+exit 1
+BREW
+chmod +x "$FAKEBIN/brew"
+EOF
+  chmod +x "$INSTALLER_PAYLOAD"
+
+  cat > "$FAKEBIN/curl" <<EOF
+#!/bin/sh
+out=""
+while [ "\$#" -gt 0 ]; do
+  case "\$1" in
+    -o)
+      shift
+      out="\$1"
+      ;;
+  esac
+  shift
+done
+cp "$INSTALLER_PAYLOAD" "\$out"
+EOF
+  chmod +x "$FAKEBIN/curl"
+
+  run env GET_BASHED_BOOTSTRAP_BASH_CANDIDATES="$FAKEBIN/bash" GET_BASHED_BOOTSTRAP_BREW_CANDIDATES="/nonexistent" PATH="$FAKEBIN:/usr/bin:/bin" ./install.sh --help
+  assert_success
+
+  run cat "$LOG"
+  assert_output "install bash"
+}
+
+@test "standalone install.sh fetches the repo tree before execing install.bash" {
+  [[ -n "$MODERN_BASH" ]] || skip "No Bash 4+ candidate on this platform"
+
+  TMPDIR="$(mktemp -d)"
+  STANDALONE="$TMPDIR/standalone"
+  FAKEBIN="$TMPDIR/bin"
+  ARCHIVE_ROOT="$TMPDIR/archive/get-bashed-main"
+  ARCHIVE="$TMPDIR/get-bashed-main.tar.gz"
+  MARKER="$TMPDIR/install-bash-ran"
+  mkdir -p "$STANDALONE" "$FAKEBIN" "$ARCHIVE_ROOT/installers"
+
+  cp ./install.sh "$STANDALONE/install.sh"
+  chmod +x "$STANDALONE/install.sh"
+
+  cat > "$ARCHIVE_ROOT/install.bash" <<EOF
+#!/usr/bin/env bash
+printf '%s\n' "repo bootstrap ok" > "$MARKER"
+EOF
+  chmod +x "$ARCHIVE_ROOT/install.bash"
+  : > "$ARCHIVE_ROOT/installers/_helpers.sh"
+
+  tar -czf "$ARCHIVE" -C "$TMPDIR/archive" get-bashed-main
+
+  cat > "$FAKEBIN/bash" <<EOF
+#!/bin/sh
+if [ "\$1" = "-c" ]; then
+  printf '5'
+  exit 0
+fi
+exec "$MODERN_BASH" "\$@"
+EOF
+  chmod +x "$FAKEBIN/bash"
+
+  cat > "$FAKEBIN/curl" <<EOF
+#!/bin/sh
+out=""
+while [ "\$#" -gt 0 ]; do
+  case "\$1" in
+    -o)
+      shift
+      out="\$1"
+      ;;
+  esac
+  shift
+done
+cp "$ARCHIVE" "\$out"
+EOF
+  chmod +x "$FAKEBIN/curl"
+
+  run env PATH="$FAKEBIN:/usr/bin:/bin" "$STANDALONE/install.sh"
+  assert_success
+  assert_file_exist "$MARKER"
+  run cat "$MARKER"
+  assert_output "repo bootstrap ok"
+}

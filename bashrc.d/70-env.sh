@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-#!/usr/bin/env bash
 # @file 70-env
 # @brief get-bashed module: 70-env
 # @description
