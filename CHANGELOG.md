@@ -31,6 +31,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- Release Please inserts release sections above this line. -->
 
+## [0.2.0](https://github.com/jbcom/get-bashed/compare/v0.1.0...v0.2.0) (2026-04-10)
+
+
+### Features
+
+* comprehensive codebase refinement for security, performance, and robustness ([#10](https://github.com/jbcom/get-bashed/issues/10)) ([98d6fec](https://github.com/jbcom/get-bashed/commit/98d6fecd24dffab963b9bc71a80400d076843adc))
+* **installer:** add legacy migration and prevent recursive loops ([#12](https://github.com/jbcom/get-bashed/issues/12)) ([3190d63](https://github.com/jbcom/get-bashed/commit/3190d633137f998b3154ba4c8a3deff1c2238325))
+
 ## [Unreleased]
 
 ## [0.1.0] — 2026-02-03
