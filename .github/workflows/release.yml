@@ -13,6 +13,6 @@ jobs:
       - name: Package
         run: ./scripts/package.sh dist "${GITHUB_REF_NAME}"
       - name: Upload tarball
-        uses: softprops/action-gh-release@c95fe1489396fe8a9eb87c0abf8ad5bc06adad52 # v6.0.0
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
         with:
           files: dist/get-bashed-${{ github.ref_name }}.tar.gz
