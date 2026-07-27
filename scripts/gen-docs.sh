@@ -2,7 +2,7 @@
 # @file gen-docs
 # @brief Generate documentation for get-bashed.
 # @description
-#     Uses shdoc to generate markdown docs from shell scripts.
+#     Uses shdoc plus registry metadata to generate installer documentation.
 
 set -euo pipefail
 
@@ -13,14 +13,11 @@ command -v shdoc >/dev/null 2>&1 || {
   exit 1
 }
 
-shdoc < "$ROOT_DIR/install.bash" > "$ROOT_DIR/docs/INSTALLER.md"
-shdoc < "$ROOT_DIR/installers/_helpers.sh" > "$ROOT_DIR/docs/INSTALLERS_HELPERS.md"
-shdoc < "$ROOT_DIR/installers/tools.sh" > "$ROOT_DIR/docs/INSTALLERS.md"
-
 fix_toc_anchors() {
-  local file="$1" tmp
+  local file="$1"
+  local tmp
+
   tmp="$(mktemp)"
-  trap 'rm -f "$tmp"' RETURN
   awk '
     function anchorize(text,   t) {
       t = tolower(text)
@@ -42,42 +39,90 @@ fix_toc_anchors() {
     }
   ' "$file" > "$tmp"
   mv "$tmp" "$file"
+  rm -f "$tmp"
 }
 
 ensure_eof() {
   local file="$1"
-  python3 - "$file" <<'PY'
-import sys
-from pathlib import Path
-path = Path(sys.argv[1])
-data = path.read_bytes()
-if not data.endswith(b"\n"):
-    path.write_bytes(data + b"\n")
-PY
+  local last_char
+
+  [[ -s "$file" ]] || return 0
+  last_char="$(tail -c 1 "$file" 2>/dev/null || true)"
+  [[ -n "$last_char" ]] && printf '\n' >> "$file"
+  return 0
 }
 
-for doc in "$ROOT_DIR/docs/INSTALLER.md" "$ROOT_DIR/docs/INSTALLERS_HELPERS.md" "$ROOT_DIR/docs/INSTALLERS.md"; do
-  fix_toc_anchors "$doc"
-  ensure_eof "$doc"
-done
+generate_shdoc_doc() {
+  local output="$1"
+  shift
+  local tmp
 
-# Combine all runtime modules
-TMP_MODULES="$(mktemp)"
-trap 'rm -f "$TMP_MODULES"' EXIT
-shopt -s nullglob
-for f in "$ROOT_DIR/bashrc.d"/*.sh; do
-  {
-    echo ""
-    cat "$f"
-    echo ""
-    echo "# ----"
-    echo ""
-  } >> "$TMP_MODULES"
-done
-shopt -u nullglob
-shdoc < "$TMP_MODULES" > "$ROOT_DIR/docs/MODULES.md"
-fix_toc_anchors "$ROOT_DIR/docs/MODULES.md"
-ensure_eof "$ROOT_DIR/docs/MODULES.md"
+  tmp="$(mktemp)"
 
-# Note: index.md is maintained manually for Sphinx toctree.
+  for source_file in "$@"; do
+    cat "$source_file" >> "$tmp"
+    printf '\n' >> "$tmp"
+  done
+
+  shdoc < "$tmp" > "$output"
+  rm -f "$tmp"
+  fix_toc_anchors "$output"
+  ensure_eof "$output"
+}
+
+generate_installers_catalog() {
+  local output="$ROOT_DIR/docs/INSTALLERS.md"
+
+  (
+    # shellcheck disable=SC1091
+    source "$ROOT_DIR/installers/_helpers.sh"
+    # shellcheck disable=SC1091
+    source "$ROOT_DIR/installers/tools.sh"
+
+    markdown_cell() {
+      printf '%s' "$1" | sed 's/|/\\|/g'
+    }
+
+    printf '# Tool Registry\n\n'
+    printf "Generated from \`installers/tools.sh\` and pinned source metadata.\n\n"
+    printf '| Tool | Description | Dependencies | Platforms | Methods |\n'
+    printf '|---|---|---|---|---|\n'
+
+    for id in "${TOOL_IDS[@]}"; do
+      printf "| \`%s\` | %s | %s | %s | %s |\n" \
+        "$id" \
+        "$(markdown_cell "${TOOL_DESC[$id]}")" \
+        "$(markdown_cell "${TOOL_DEPS[$id]:-<none>}")" \
+        "$(markdown_cell "${TOOL_PLATFORMS[$id]:-<none>}")" \
+        "$(markdown_cell "${TOOL_METHODS[$id]:-<none>}")"
+    done
+  ) > "$output"
+
+  ensure_eof "$output"
+}
+
+generate_shdoc_doc \
+  "$ROOT_DIR/docs/INSTALLER.md" \
+  "$ROOT_DIR/install.bash" \
+  "$ROOT_DIR/installlib/config.sh" \
+  "$ROOT_DIR/installlib/resolve.sh" \
+  "$ROOT_DIR/installlib/ui.sh" \
+  "$ROOT_DIR/installlib/filesystem.sh" \
+  "$ROOT_DIR/installlib/managed_files.sh" \
+  "$ROOT_DIR/installlib/runtime_files.sh" \
+  "$ROOT_DIR/installlib/installers.sh"
+
+generate_shdoc_doc \
+  "$ROOT_DIR/docs/INSTALLERS_HELPERS.md" \
+  "$ROOT_DIR/installers/_helpers.sh" \
+  "$ROOT_DIR/installers/lib/core.sh" \
+  "$ROOT_DIR/installers/lib/system.sh" \
+  "$ROOT_DIR/installers/lib/packages.sh" \
+  "$ROOT_DIR/installers/lib/asdf.sh" \
+  "$ROOT_DIR/installers/lib/tool_runner.sh" \
+  "$ROOT_DIR/installers/lib/installers.sh" \
+  "$ROOT_DIR/installers/lib/languages.sh"
+
+generate_installers_catalog
+
 echo "Docs generated under docs/"

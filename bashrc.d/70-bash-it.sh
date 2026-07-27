@@ -8,8 +8,11 @@ if [[ "${GET_BASHED_USE_BASH_IT:-0}" == "1" ]]; then
   GET_BASHED_HOME="${GET_BASHED_HOME:-$HOME/.get-bashed}"
   BASH_IT="$GET_BASHED_HOME/vendor/bash-it"
   if [[ -r "$BASH_IT/bash_it.sh" ]]; then
-    # shellcheck disable=SC1090,SC1091
-    source "$BASH_IT/bash_it.sh"
+    if [[ -z "${GET_BASHED_BASH_IT_LOADED:-}" ]]; then
+      # shellcheck disable=SC1090,SC1091
+      source "$BASH_IT/bash_it.sh"
+      export GET_BASHED_BASH_IT_LOADED=1
+    fi
 
     get_bashed_component() {
       local action="${1:-enable}"
