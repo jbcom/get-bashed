@@ -49,7 +49,7 @@ EOF
   HOME="$TMPDIR/home"
   FAKEBIN="$TMPDIR/bin"
   MARKER="$TMPDIR/doppler-args"
-  mkdir -p "$FAKEBIN"
+  mkdir -p "$HOME" "$FAKEBIN"
 
   cat > "$FAKEBIN/doppler" <<EOF
 #!/bin/sh
@@ -58,7 +58,11 @@ exit 0
 EOF
   chmod +x "$FAKEBIN/doppler"
 
-  run env HOME="$HOME" GET_BASHED_USE_DOPPLER=1 PATH="$FAKEBIN:/usr/bin:/bin" "$MODERN_BASH" -lc 'source bashrc.d/66-doppler.sh; doppler_shell'
+  # macOS re-derives PATH via /etc/profile's path_helper on every login
+  # shell (-lc), which can reorder a real /opt/homebrew/bin/doppler
+  # ahead of $FAKEBIN. Re-assert PATH after login init so the fake
+  # binary this test installed is guaranteed to win.
+  run env HOME="$HOME" GET_BASHED_USE_DOPPLER=1 PATH="$FAKEBIN:/usr/bin:/bin" "$MODERN_BASH" -lc "PATH=\"$FAKEBIN:/usr/bin:/bin\"; source bashrc.d/66-doppler.sh; doppler_shell"
   assert_success
   run cat "$MARKER"
   assert_output "run -- bash"

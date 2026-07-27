@@ -106,8 +106,7 @@ if [[ "$1" == "api" ]]; then
     *'contents/.github/workflows/codeql.yml?ref='*) exit 0 ;;
     *'.required_status_checks.contexts[]'*)
       printf '%s\n' \
-        'CodeQL (actions)' \
-        'CodeQL (python)' \
+        'Analyze (actions)' \
         'Quality (ubuntu-latest)' \
         'Quality (macos-latest)' \
         'Quality (wsl-ubuntu)' \

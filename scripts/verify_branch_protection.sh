@@ -23,9 +23,15 @@ expected_checks=(
 )
 
 if gh api "repos/${REPO}/contents/.github/workflows/codeql.yml?ref=${BRANCH}" >/dev/null 2>&1; then
+  # Job names come from codeql.yml's `name: Analyze (${{ matrix.language }})`.
+  # The workflow's fleet-synced matrix also declares a
+  # `javascript-typescript` entry, but get-bashed carries no JS/TS source
+  # (it's a Bash installer + Python docs project), so that job always
+  # fails with a CodeQL "no source seen" configuration error and must
+  # not be a required check here. Only "actions" analyzes real content
+  # in this repo.
   expected_checks+=(
-    "CodeQL (actions)"
-    "CodeQL (python)"
+    "Analyze (actions)"
   )
 fi
 

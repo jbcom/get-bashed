@@ -5,9 +5,11 @@ set -euo pipefail
 REPO="${1:-jbcom/get-bashed}"
 BRANCH="${2:-main}"
 
+# get-bashed carries no JS/TS source, so only "Analyze (actions)"
+# produces a meaningful (non-configuration-error) CodeQL result here.
+# See verify_branch_protection.sh for the full rationale.
 required_codeql_checks=(
-  "CodeQL (actions)"
-  "CodeQL (python)"
+  "Analyze (actions)"
 )
 
 if ! command -v gh >/dev/null 2>&1; then

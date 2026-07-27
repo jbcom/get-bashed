@@ -76,8 +76,7 @@ if [[ "\$1" == "api" ]]; then
     *'-X PATCH repos/jbcom/get-bashed/branches/main/protection/required_status_checks'*)
       printf '%s\n' "\$*" >> "\$log_file"
       {
-        printf 'CodeQL (actions)\n'
-        printf 'CodeQL (python)\n'
+        printf 'Analyze (actions)\n'
         cat "\$state_file"
       } | awk 'NF && !seen[\$0]++' | LC_ALL=C sort > "\$state_file.new"
       mv "\$state_file.new" "\$state_file"
@@ -100,10 +99,7 @@ EOF
   run grep -F 'patched-default-setup' "$log_file"
   assert_success
 
-  run grep -F 'contexts[]=CodeQL (actions)' "$log_file"
-  assert_success
-
-  run grep -F 'contexts[]=CodeQL (python)' "$log_file"
+  run grep -F 'contexts[]=Analyze (actions)' "$log_file"
   assert_success
 
   rm -rf "$tmpdir"

@@ -9,19 +9,22 @@ load test_helper
   run grep -F 'name: CodeQL' .github/workflows/codeql.yml
   assert_success
 
-  run grep -F 'language: [actions, python]' .github/workflows/codeql.yml
+  # codeql.yml is centrally synced from gh-fleet-sync (see its header
+  # comment); its matrix covers javascript-typescript + actions with
+  # build-mode: none, so there is no compiled-language autobuild step.
+  run grep -F 'language: javascript-typescript' .github/workflows/codeql.yml
   assert_success
 
-  run grep -F 'queries: security-extended' .github/workflows/codeql.yml
+  run grep -F 'queries: security-and-quality' .github/workflows/codeql.yml
   assert_success
 
   run grep -F 'github/codeql-action/init@' .github/workflows/codeql.yml
   assert_success
 
-  run grep -F 'github/codeql-action/autobuild@' .github/workflows/codeql.yml
+  run grep -F 'github/codeql-action/analyze@' .github/workflows/codeql.yml
   assert_success
 
-  run grep -F 'github/codeql-action/analyze@' .github/workflows/codeql.yml
+  run grep -E 'codeql-action/(init|analyze)@[a-f0-9]{40}' .github/workflows/codeql.yml
   assert_success
 }
 

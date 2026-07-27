@@ -49,6 +49,16 @@ permission_locked_workflows=(
 
 workflow_permissions_ok="true"
 for workflow in "${permission_locked_workflows[@]}"; do
+  # codeql.yml is centrally synced (see its header comment) and declares
+  # least-privilege permissions at job level instead of a blanket
+  # top-level `permissions: {}` — accept either form.
+  if [ "$workflow" = "$REPO_ROOT/.github/workflows/codeql.yml" ]; then
+    if ! has_regex '^\s*permissions:\s*$' "$workflow"; then
+      workflow_permissions_ok="false"
+      break
+    fi
+    continue
+  fi
   if ! has_regex '^permissions: \{\}$' "$workflow"; then
     workflow_permissions_ok="false"
     break
@@ -126,10 +136,9 @@ fi
 codeql_workflow="$REPO_ROOT/.github/workflows/codeql.yml"
 if [ -f "$codeql_workflow" ] \
   && has_regex '^name: CodeQL$' "$codeql_workflow" \
-  && has_regex 'language: \[actions, python\]' "$codeql_workflow" \
-  && has_regex 'queries: security-extended' "$codeql_workflow" \
+  && has_regex 'language: (javascript-typescript|\[actions, python\])' "$codeql_workflow" \
+  && has_regex 'queries: security-(and-quality|extended)' "$codeql_workflow" \
   && has_regex 'github/codeql-action/init@' "$codeql_workflow" \
-  && has_regex 'github/codeql-action/autobuild@' "$codeql_workflow" \
   && has_regex 'github/codeql-action/analyze@' "$codeql_workflow"; then
   pass "repo-owned CodeQL workflow is checked into the repository"
 else
