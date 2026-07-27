@@ -19,7 +19,7 @@ fi
 usage() {
   cat <<'USAGE'
 Usage: install.sh [--prefix PATH] [--force] [--with-ui]
-                  [--auto] [--yes] 
+                  [--auto] [--yes]
                   [--profiles minimal|dev|ops[,..]]
                   [--features gnu_over_bsd,build_flags,...]
                   [--install brew,asdf,doppler,...]
@@ -71,7 +71,7 @@ GET_BASHED_GIT_SIGNING=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --prefix) 
+    --prefix)
       if [[ $# -lt 2 ]]; then
         echo "Error: --prefix requires a value" >&2
         usage
