@@ -1,23 +1,16 @@
 #!/usr/bin/env bash
 # @file package
-# @brief Package get-bashed into a tarball.
+# @brief Compatibility wrapper around the release packager.
 # @description
-#     Produces a versioned tarball for releases.
+#     Produces the Unix release tarball used by the newer release pipeline.
 
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT_DIR="${1:-$ROOT_DIR/dist}"
-VERSION="${2:-$(git describe --tags --always --dirty)}"
+VERSION_RAW="${2:-$(git describe --tags --always --dirty)}"
+VERSION="${VERSION_RAW#v}"
 
-mkdir -p "$OUT_DIR"
-TARBALL="$OUT_DIR/get-bashed-${VERSION}.tar.gz"
+bash "$ROOT_DIR/scripts/build_release_artifact.sh" "$VERSION" "$OUT_DIR" >/dev/null
 
-tar -czf "$TARBALL" \
-  --exclude-vcs \
-  --exclude='./dist' \
-  --exclude='./tests' \
-  --exclude='./.github' \
-  -C "$ROOT_DIR" .
-
-echo "$TARBALL"
+printf '%s\n' "$OUT_DIR/get-bashed-${VERSION}-unix.tar.gz"

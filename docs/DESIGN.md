@@ -53,6 +53,8 @@ Secrets belong in `~/.get-bashed/secrets.d/` which is git-ignored. No auto-sourc
 The install experience should:
 
 - Work from a single `curl | sh` command on a fresh machine.
+- Fetch the repo tree automatically when `install.sh` is being run as a standalone downloaded file, using a revision-pinned archive URL.
+- Bootstrap Homebrew from a pinned installer first when a fresh macOS machine does not yet have a modern Bash.
 - Let the user review the installer before running it.
 - Succeed non-interactively (`--auto --yes`) for CI and provisioning scripts.
 - Offer a curses UI (`--with-ui`) for exploratory first installs.

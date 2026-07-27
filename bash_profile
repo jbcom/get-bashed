@@ -1,20 +1,46 @@
+#!/usr/bin/env bash
+# shellcheck disable=SC1091
 # @file bash_profile
 # @brief get-bashed login entrypoint.
 # @description
 #     Loads Homebrew shellenv (if present) then delegates to bashrc.
 
+# shellcheck disable=SC1091
 # Return early if not interactive
 [[ $- != *i* ]] && return
 
+_get_brew_bin() {
+  local candidate
+  local -a candidates=()
+
+  if command -v brew >/dev/null 2>&1; then
+    command -v brew
+    return 0
+  fi
+
+  if [[ -n "${GET_BASHED_BREW_BIN_CANDIDATES:-}" ]]; then
+    # shellcheck disable=SC2206
+    candidates=(${GET_BASHED_BREW_BIN_CANDIDATES})
+  else
+    candidates=(
+      "/opt/homebrew/bin/brew"
+      "/usr/local/bin/brew"
+      "/home/linuxbrew/.linuxbrew/bin/brew"
+    )
+  fi
+
+  for candidate in "${candidates[@]}"; do
+    [[ -x "$candidate" ]] || continue
+    printf '%s\n' "$candidate"
+    return 0
+  done
+
+  return 1
+}
+
 # Homebrew shellenv (optional)
-if command -v brew >/dev/null 2>&1; then
-  BREW_PREFIX="$(dirname "$(dirname "$(command -v brew)")")"
-  export HOMEBREW_PREFIX="$BREW_PREFIX"
-  export HOMEBREW_CELLAR="$BREW_PREFIX/Cellar"
-  export HOMEBREW_REPOSITORY="$BREW_PREFIX"
-  export PATH="$BREW_PREFIX/bin:$BREW_PREFIX/sbin${PATH+:$PATH}"
-  export MANPATH="$BREW_PREFIX/share/man${MANPATH+:$MANPATH}:"
-  export INFOPATH="$BREW_PREFIX/share/info:${INFOPATH:-}"
+if BREW_BIN="$(_get_brew_bin)"; then
+  eval "$("$BREW_BIN" shellenv 2>/dev/null)"
 fi
 
 # Hand off to interactive rc

@@ -12,7 +12,8 @@ trap 'rm -rf "$TMPDIR"' EXIT
 TEST_HOME="$TMPDIR/home"
 mkdir -p "$TEST_HOME"
 
-HOME="$TEST_HOME" "$ROOT_DIR/install.sh" --auto --profiles minimal --link-dotfiles --name "Test User" --email "test@example.com"
+HOME="$TEST_HOME" GET_BASHED_HOME="$TEST_HOME/.get-bashed" \
+  "$ROOT_DIR/install.sh" --auto --profiles minimal --link-dotfiles --name "Test User" --email "test@example.com"
 
 [[ -L "$TEST_HOME/.bashrc" ]]
 [[ -L "$TEST_HOME/.bash_profile" ]]

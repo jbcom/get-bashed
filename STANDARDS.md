@@ -55,7 +55,7 @@ Every module and installer must be safe to run multiple times without unintended
 
 - New installer flows need BATS test coverage.
 - Tests run in an isolated temp `HOME`; they must not modify the developer's real home directory.
-- Test helper libraries are pinned to specific commit SHAs in `scripts/test-setup.sh`. Do not update SHAs without auditing the new commits.
+- Test helper libraries are pinned in `installers/sources.sh`. Do not update SHAs without auditing the new commits.
 
 ## Secrets Handling
 
@@ -67,7 +67,7 @@ Every module and installer must be safe to run multiple times without unintended
 ## Installer Security
 
 - Prefer package managers (brew, apt, dnf, yum, pacman) over raw curl or git downloads.
-- When curl/git downloads are unavoidable, document the source and prefer pinned releases.
+- When curl/git downloads are unavoidable, document the source and prefer pinned releases or pinned refs from `installers/sources.sh`.
 - Avoid `eval` with untrusted input. Validate all user-supplied arguments that affect execution paths.
 - Do not suppress `set -e` behavior in installers without an explicit inline comment explaining why.
 
@@ -75,13 +75,12 @@ Every module and installer must be safe to run multiple times without unintended
 
 All PRs must pass before merge:
 
-- `lint` job: shellcheck, bashate, actionlint, gitleaks (via pre-commit).
-- `tests` job: BATS suite + `scripts/verify-install.sh`.
-- PR title must follow Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`, `ci:`).
+- `quality` job: shellcheck, bashate, actionlint, gitleaks (via pre-commit), BATS, install verification, docs generation, and docs build on Ubuntu and macOS.
+- `sonarqube` job: repository scan after the quality matrix succeeds.
 
 ## Commit Style
 
-Conventional Commits format is required. Examples:
+Conventional Commits format is expected. Examples:
 
 ```
 feat: add shdoc auto-install handler
@@ -90,7 +89,7 @@ docs: update CONFIG.md with all feature flags
 refactor: extract pkg_install into _helpers.sh
 test: add coverage for --link-dotfiles flow
 ci: pin checkout action to v6 SHA
-chore: bump bats-assert to latest pinned SHA
+chore: bump bats-assert pinned SHA
 ```
 
 ## Pull Requests
