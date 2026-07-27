@@ -11,6 +11,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0](https://github.com/jbcom/get-bashed/compare/v0.2.1...v0.3.0) (2026-07-27)
+
+
+### Features
+
+* comprehensive codebase refinement for security, performance, and robustness ([#10](https://github.com/jbcom/get-bashed/issues/10)) ([98d6fec](https://github.com/jbcom/get-bashed/commit/98d6fecd24dffab963b9bc71a80400d076843adc))
+* **installer:** add legacy migration and prevent recursive loops ([#12](https://github.com/jbcom/get-bashed/issues/12)) ([3190d63](https://github.com/jbcom/get-bashed/commit/3190d633137f998b3154ba4c8a3deff1c2238325))
+
+
+### Bug Fixes
+
+* **deps:** remove orphaned uv.lock ([#35](https://github.com/jbcom/get-bashed/issues/35)) ([c56e4ed](https://github.com/jbcom/get-bashed/commit/c56e4edfb314109c94ee0629b21c829da37addc3))
+* repair two fabricated SHA pins and pre-existing whitespace ([#31](https://github.com/jbcom/get-bashed/issues/31)) ([9a4fe0a](https://github.com/jbcom/get-bashed/commit/9a4fe0ae7c4ef5c694661a6b10f42106ae61faf3))
+
 ## [0.2.1](https://github.com/jbcom/get-bashed/compare/v0.2.0...v0.2.1) (2026-07-27)
 
 
