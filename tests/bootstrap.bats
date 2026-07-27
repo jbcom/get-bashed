@@ -31,7 +31,17 @@ exit 99
 EOF
   chmod +x "$FAKEBIN/bash"
 
-  run env PATH="$FAKEBIN:/usr/bin:/bin" ./install.sh --help
+  # find_modern_bash's default GET_BASHED_BOOTSTRAP_BASH_CANDIDATES
+  # only probes a fixed set of Homebrew-prefix paths — it never checks
+  # the plain system bash location, even when that's already modern.
+  # A dev Mac or GitHub's ubuntu-latest image usually has one of those
+  # fixed paths present for unrelated reasons, so this test happened
+  # to pass by accident; on a bare Ubuntu container/WSL image with
+  # none of them present it falls through to a real, non-hermetic
+  # Homebrew bootstrap from the network. Point the candidate list at
+  # $MODERN_BASH explicitly so this test's PATH is the only bash
+  # source install.sh can find, on every platform.
+  run env PATH="$FAKEBIN:/usr/bin:/bin" GET_BASHED_BOOTSTRAP_BASH_CANDIDATES="$MODERN_BASH" ./install.sh --help
   assert_success
   assert_file_not_exist "$MARKER"
 }
