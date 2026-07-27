@@ -8,8 +8,26 @@ status: current
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### ⚠️ BREAKING CHANGES
+- **Consolidated Installation Prefix**: The environment is now strictly managed under a single prefix (`~/.get-bashed/` by default). Runtime modules have moved from `~/.bashrc.d/` to `~/.get-bashed/bashrc.d/`, and local secrets have moved from `~/.secrets.d/` to `~/.get-bashed/secrets.d/`. The installer includes automatic migration logic, but users are strongly advised to back up custom modules and secrets before upgrading.
+- **Dotfile Symlinking Logic**: Dotfiles are no longer automatically copied to the home directory. Instead, they are copied to the managed prefix and, when `--link-dotfiles` is invoked, they are symlinked *from* the home directory *to* the managed prefix.
+
+### Added
+- Comprehensive Sphinx-based documentation published to GitHub Pages.
+- Native `globstar` enablement for recursive file matching in Bash.
+- Automatic integration of `eza` for modernized `ls` aliases when available.
+- New `mkcd` command helper in `90-functions.sh`.
+- Security enforcement: `secrets.d` and `.ssh/agent.sock` are now guaranteed to generate with restrictive (`700`/`600`) permissions to prevent exposing local credentials to other users on the system.
+
+### Changed
+- Massive performance optimization of interactive startup by eliminating multiple `$(brew --prefix <pkg>)` subshells in `.bash_profile` and `.bashrc`.
+- Redesigned `install.bash` to safely escape injected variables like `--name` and `--email`, preventing unintended command execution.
+- Redesigned `get_bashed_component` to rely on `$BASH_SOURCE` physical paths rather than trusting the `$GET_BASHED_HOME` environment variable.
 
 <!-- Release Please inserts release sections above this line. -->
 

@@ -17,6 +17,23 @@ status: current
 
 A modular, portable Bash environment you can install on any machine. get-bashed gives you clean shell defaults, ordered runtime modules, a centralized tool installer, and reproducible configuration — without touching anything you do not explicitly ask it to touch.
 
+## ⚠️ Upgrading & Breaking Changes
+
+**BREAKING CHANGE:** As of the latest release, get-bashed consolidates all runtime modules, local secrets, and dotfiles into a single managed prefix (default: `~/.get-bashed/`).
+
+If you are upgrading from a legacy installation (where files were stored in `~/.bashrc.d` and `~/.secrets.d`), the installer will attempt to automatically migrate your custom scripts and secrets into the new managed prefix.
+
+**Before upgrading, it is highly recommended to back up your custom modules:**
+```bash
+cp -r ~/.bashrc.d ~/bashrc.d.backup 2>/dev/null || true
+cp -r ~/.secrets.d ~/secrets.d.backup 2>/dev/null || true
+```
+
+To upgrade your environment, simply re-run the installer over your existing setup:
+```bash
+./install.sh --auto
+```
+
 ## What it is
 
 - Ordered `bashrc.d/` modules loaded by `bashrc` at shell startup.
