@@ -133,6 +133,18 @@ INPUT
   DIALOG_COUNT="$TMPDIR/dialog-count"
   mkdir -p "$FAKEBIN"
 
+  # NOTE: the checklist-selection printf below must produce a real "
+  # (0x22) byte around each selected tag, matching how a genuine
+  # `dialog --checklist` reply quotes multi-word tags. Writing that as
+  # printf '\"%s\"' (single-quoted format string) is not portable:
+  # POSIX printf does not define \" as an escape, so under dash
+  # (Ubuntu/Debian's /bin/sh) it is emitted literally as a backslash
+  # followed by a quote (`\"gnu_over_bsd\"`) instead of a bare quote
+  # (`"gnu_over_bsd"`). bash's printf happens to tolerate it, which is
+  # why this only broke in Linux CI and never locally on macOS. Using
+  # a double-quoted format string makes the shell itself resolve \" to
+  # a literal " before printf ever sees it, which is portable across
+  # both shells.
   cat > "$FAKEBIN/dialog" <<EOF
 #!/bin/sh
 count=0
@@ -156,7 +168,7 @@ while [ "\$#" -ge 3 ]; do
     if [ "\$first" -eq 0 ]; then
       printf ' ' >&2
     fi
-    printf '\"%s\"' "\$tag" >&2
+    printf "\"%s\"" "\$tag" >&2
     first=0
   fi
 done

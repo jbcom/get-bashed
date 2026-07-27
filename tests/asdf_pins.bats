@@ -111,7 +111,12 @@ exit 0
 EOF
   chmod +x "$FAKEBIN/python3"
 
-  run env HOME="$HOME" GET_BASHED_HOME="$PREFIX" PATH="$FAKEBIN:/usr/bin:/bin" "$MODERN_BASH" -c 'source installers/_helpers.sh; source installers/tools.sh; _using_brew(){ return 1; }; install_tool pipx'
+  # install_tool's method chain tries brew, then apt/dnf/yum/pacman,
+  # before pip. A CI runner (e.g. ubuntu-latest) has a real apt-get on
+  # PATH that would genuinely install pipx and short-circuit before
+  # ever reaching the pip fallback this test exercises, so every
+  # package-manager method ahead of pip must be forced to fail too.
+  run env HOME="$HOME" GET_BASHED_HOME="$PREFIX" PATH="$FAKEBIN:/usr/bin:/bin" "$MODERN_BASH" -c 'source installers/_helpers.sh; source installers/tools.sh; _using_brew(){ return 1; }; apt_install(){ return 1; }; dnf_install(){ return 1; }; yum_install(){ return 1; }; pacman_install(){ return 1; }; install_tool pipx'
   assert_success
 
   run cat "$LOG"

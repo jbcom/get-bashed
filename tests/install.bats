@@ -55,9 +55,24 @@ printf 'archive' > "\$outfile"
 EOF
   chmod +x "$FAKEBIN/curl"
 
-  cat > "$FAKEBIN/sha256sum" <<'EOF'
+  # install_actionlint keys GET_BASHED_ACTIONLINT_SHA256 on the
+  # runtime `uname`-derived os_arch, so the fake sha256sum must return
+  # whichever pin matches the platform this test actually runs on
+  # (darwin_arm64 locally, linux_amd64/linux_arm64 in CI) instead of a
+  # hardcoded value that only happens to match one platform.
+  os="$(uname -s | tr '[:upper:]' '[:lower:]')"
+  arch="$(uname -m)"
+  case "$arch" in
+    x86_64) arch="amd64" ;;
+    arm64|aarch64) arch="arm64" ;;
+  esac
+  expected_checksum="$(
+    "$MODERN_BASH" -c "source installers/sources.sh; printf '%s' \"\${GET_BASHED_ACTIONLINT_SHA256[${os}_${arch}]}\""
+  )"
+
+  cat > "$FAKEBIN/sha256sum" <<EOF
 #!/bin/sh
-printf '%s  %s\n' 'aba9ced2dee8d27fecca3dc7feb1a7f9a52caefa1eb46f3271ea66b6e0e6953f' "$1"
+printf '%s  %s\n' '$expected_checksum' "\$1"
 EOF
   chmod +x "$FAKEBIN/sha256sum"
 
